@@ -10,12 +10,13 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _pinController = TextEditingController();
   bool _isPinVisible = false;
-  
+
   @override
   void dispose() {
     _pinController.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -165,9 +166,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SizedBox(
                                 width: 30.w,
                                 child: CardButtonWatchMovie(
-                                  title: "Activate Device",
+                                  title: "user-list",
                                   onTap: () {
-                                    Get.toNamed(screenDeviceActivation);
+                                    Get.toNamed(screenUsersList);
                                   },
                                 ),
                               ),
@@ -226,15 +227,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-  
+
   void _showPinDialog(BuildContext context, UserModel user) async {
     // Get the playlist name
     String playlistName = user.userInfo?.playlistName ?? '';
-    
+
     // Pre-fill with existing PIN for this specific playlist
     String pin = await LocaleApi.getPlaylistPin(playlistName);
     _pinController.text = pin;
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -264,7 +265,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   keyboardType: TextInputType.number,
                   maxLength: 6,
                   obscureText: !_isPinVisible,
-                  style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
+                  style:
+                      Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: "Enter PIN (numbers only)",
                     hintStyle: Get.textTheme.bodyMedium!.copyWith(
@@ -275,7 +277,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _isPinVisible ? FontAwesomeIcons.eyeSlash : FontAwesomeIcons.eye,
+                        _isPinVisible
+                            ? FontAwesomeIcons.eyeSlash
+                            : FontAwesomeIcons.eye,
                         size: 18,
                         color: kColorPrimary,
                       ),
@@ -306,26 +310,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   String pin = _pinController.text.trim();
                   if (pin.isNotEmpty && !RegExp(r'^\d+$').hasMatch(pin)) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('PIN must contain only numbers')),
+                      const SnackBar(
+                          content: Text('PIN must contain only numbers')),
                     );
                     return;
                   }
-                  
+
                   // Get playlist name
                   String playlistName = user.userInfo?.playlistName ?? '';
-                  
+
                   // Save PIN for this specific playlist
-                  bool success = await LocaleApi.updatePlaylistPin(pin, playlistName);
+                  bool success =
+                      await LocaleApi.updatePlaylistPin(pin, playlistName);
                   if (success) {
                     // Update the bloc state to reflect changes
                     context.read<AuthBloc>().add(AuthGetUser());
-                    
+
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          pin.isEmpty 
-                              ? 'PIN protection disabled' 
+                          pin.isEmpty
+                              ? 'PIN protection disabled'
                               : 'Playlist PIN updated successfully',
                         ),
                         backgroundColor: kColorPrimary,

@@ -28,7 +28,7 @@ import 'package:wakelock/wakelock.dart';
 import '../../helpers/helpers.dart';
 import '../../logic/blocs/auth/auth_bloc.dart';
 import '../../repository/services/expiration_service.dart';
-import '../../repository/models/user.dart';
+import '../../repository/services/playlist_service.dart';
 import '../../logic/blocs/categories/channels/channels_bloc.dart';
 import '../../logic/blocs/categories/live_caty/live_caty_bloc.dart';
 import '../../logic/blocs/categories/movie_caty/movie_caty_bloc.dart';
@@ -73,4 +73,3 @@ part 'user/pin_verification.dart';
 part 'welcome.dart';
 part 'user/catch_up.dart';
 part 'user/device_activation.dart';
-

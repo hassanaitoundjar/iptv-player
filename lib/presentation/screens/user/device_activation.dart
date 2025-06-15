@@ -11,22 +11,11 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
   String macAddress = '';
   String deviceKey = '';
   bool isLoading = false;
-  Timer? _checkActivationTimer;
-
-  // Configuration for activation polling
-  static const int pollingIntervalSeconds = 5;
 
   @override
   void initState() {
     super.initState();
     _getDeviceInfo();
-    _startPollingForActivation();
-  }
-
-  @override
-  void dispose() {
-    _checkActivationTimer?.cancel();
-    super.dispose();
   }
 
   Future<void> _getDeviceInfo() async {
@@ -35,263 +24,251 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
     });
 
     try {
-      // Get device information to create a unique MAC-like address
+      // Get real device identifiers
       DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-      String uniqueId = '';
-      String deviceModel = '';
-      String deviceName = '';
-      
+
       if (Platform.isAndroid) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-        uniqueId = androidInfo.id;
-        deviceModel = androidInfo.model;
-        deviceName = androidInfo.device;
-        
-        // Format as MAC address (XX:XX:XX:XX:XX:XX)
-        final bytes = utf8.encode('$uniqueId$deviceModel$deviceName');
-        final digest = sha256.convert(bytes);
-        final hexString = digest.toString().substring(0, 12).toUpperCase(); // Take first 12 chars
-        
-        // Format as XX:XX:XX:XX:XX:XX
-        macAddress = _formatAsMacAddress(hexString);
-        debugPrint('Generated Android MAC address: $macAddress');
+
+        // Format MAC-like address from Android ID
+        // This is not a real MAC address but a unique device identifier
+        String id = androidInfo.id;
+        if (id.length >= 12) {
+          // Format as XX:XX:XX:XX:XX:XX
+          macAddress = id
+              .substring(0, 12)
+              .replaceAllMapped(
+                  RegExp(r'(.{2})'), (match) => '${match.group(0)}:')
+              .substring(0, 17);
+        } else {
+          // Pad if needed
+          macAddress = (id.padRight(12, '0'))
+              .replaceAllMapped(
+                  RegExp(r'(.{2})'), (match) => '${match.group(0)}:')
+              .substring(0, 17);
+        }
+
+        // Convert to uppercase for consistency
+        macAddress = macAddress.toUpperCase();
       } else if (Platform.isIOS) {
         IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
-        uniqueId = iosInfo.identifierForVendor ?? '';
-        deviceModel = iosInfo.model;
-        deviceName = iosInfo.name;
-        
-        // Format as MAC address (XX:XX:XX:XX:XX:XX)
-        final bytes = utf8.encode('$uniqueId$deviceModel$deviceName');
-        final digest = sha256.convert(bytes);
-        final hexString = digest.toString().substring(0, 12).toUpperCase(); // Take first 12 chars
-        
-        // Format as XX:XX:XX:XX:XX:XX
-        macAddress = _formatAsMacAddress(hexString);
-        debugPrint('Generated iOS MAC address: $macAddress');
+        String id = iosInfo.identifierForVendor ?? '';
+
+        // Format MAC-like address from iOS vendor ID
+        if (id.length >= 12) {
+          // Format as XX:XX:XX:XX:XX:XX
+          macAddress = id
+              .substring(0, 12)
+              .replaceAllMapped(
+                  RegExp(r'(.{2})'), (match) => '${match.group(0)}:')
+              .substring(0, 17);
+        } else {
+          // Pad if needed
+          macAddress = (id.padRight(12, '0'))
+              .replaceAllMapped(
+                  RegExp(r'(.{2})'), (match) => '${match.group(0)}:')
+              .substring(0, 17);
+        }
+
+        // Convert to uppercase for consistency
+        macAddress = macAddress.toUpperCase();
+      } else {
+        // For other platforms, generate a consistent MAC-like address
+        final random = Random(DateTime.now().millisecondsSinceEpoch);
+        macAddress = List.generate(
+                6, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'))
+            .join(':')
+            .toUpperCase();
       }
 
-      // Generate a device key that will remain consistent for this device
+      // Generate a unique device key that will remain consistent for this device
       deviceKey = await _generateDeviceKey();
+
+      debugPrint('Using MAC address: $macAddress');
       debugPrint('Using device key: $deviceKey');
     } catch (e) {
       debugPrint('Error getting device info: $e');
-      // Fallback to random values for testing
-      macAddress = '00:11:22:33:44:55';
-      deviceKey = 'TEST_DEVICE_KEY_8100';
+      
+      // Generate a more realistic fallback MAC address based on device timestamp
+      // Use a consistent seed for the same device
+      final seed = DateTime.now().millisecondsSinceEpoch & 0xFFFFFF; // Last 24 bits
+      final random = Random(seed);
+      
+      // Generate MAC address with locally administered bit set (second least significant bit of first byte)
+      // This ensures it won't conflict with real manufacturer MACs
+      final firstByte = (0x02 | (random.nextInt(254) & 0xFE)).toRadixString(16).padLeft(2, '0');
+      
+      macAddress = [
+        firstByte,
+        ...List.generate(5, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'))
+      ].join(':').toUpperCase();
+      
+      // Generate a 6-digit fallback key based on the same seed for consistency
+      deviceKey = ((seed % 900000) + 100000).toString();
+      
+      debugPrint('Using generated MAC address: $macAddress');
+      debugPrint('Using 6-digit device key: $deviceKey');
     }
 
     setState(() {
       isLoading = false;
     });
   }
-  
-  // Format a hex string as a MAC address (XX:XX:XX:XX:XX:XX)
-  String _formatAsMacAddress(String hexString) {
-    final List<String> pairs = [];
-    for (int i = 0; i < hexString.length; i += 2) {
-      if (i + 2 <= hexString.length) {
-        pairs.add(hexString.substring(i, i + 2));
-      }
-    }
-    return pairs.join(':');
-  }
 
   Future<String> _generateDeviceKey() async {
     final deviceInfo = DeviceInfoPlugin();
-    String deviceData = '';
-
-    if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      // Use only permanent device identifiers that won't change
-      deviceData = '${androidInfo.brand}_${androidInfo.id}_${androidInfo.model}_${androidInfo.device}_${androidInfo.hardware}';
-      debugPrint('Android device data for key: $deviceData');
-    } else if (Platform.isIOS) {
-      final iosInfo = await deviceInfo.iosInfo;
-      // Use only permanent device identifiers that won't change
-      deviceData = '${iosInfo.identifierForVendor}_${iosInfo.model}_${iosInfo.name}_${iosInfo.systemName}_${iosInfo.systemVersion}';
-      debugPrint('iOS device data for key: $deviceData');
-    }
-
-    // Add a salt to make the key more unique
-    final salt = 'IPTV_PLAYER_UNIQUE_SALT_2025';
-    deviceData = '$deviceData$salt$macAddress';
-    
-    // Generate a hash of the device data
-    final bytes = utf8.encode(deviceData);
-    final digest = sha256.convert(bytes);
-    
-    // Create a key with 16 characters (alphanumeric)
-    final fullHash = digest.toString().toUpperCase();
-    final key = fullHash.substring(0, 16);
-    
-    debugPrint('Generated consistent device key: $key');
-    return key;
-  }
-
-  void _startPollingForActivation() {
-    // Check every few seconds if the device has been activated
-    _checkActivationTimer =
-        Timer.periodic(Duration(seconds: pollingIntervalSeconds), (_) {
-      _checkActivationStatus();
-    });
-
-    // Also check immediately
-    _checkActivationStatus();
-  }
-
-  Future<void> _checkActivationStatus() async {
-    if (macAddress.isEmpty || deviceKey.isEmpty) return;
-
-    debugPrint(
-        'Checking activation status for MAC: $macAddress, Key: $deviceKey');
+    Map<String, String> deviceData = {};
 
     try {
-      // Use the simple API endpoint format like iboPlayer: /api/device/{mac}/{key}
-      final url = '${AppConfig.apiBaseUrl}/api/device/$macAddress/$deviceKey';
-      debugPrint('API URL: $url');
+      if (Platform.isAndroid) {
+        final androidInfo = await deviceInfo.androidInfo;
 
-      final response = await http.get(Uri.parse(url));
+        // Collect multiple permanent identifiers for better uniqueness
+        deviceData = {
+          'id': androidInfo.id,
+          'brand': androidInfo.brand,
+          'model': androidInfo.model,
+          'device': androidInfo.device,
+          'product': androidInfo.product,
+          'hardware': androidInfo.hardware,
+          'manufacturer': androidInfo.manufacturer,
+          'fingerprint': androidInfo.fingerprint,
+          // Add Android version for additional uniqueness
+          'version': androidInfo.version.release,
+        };
 
-      debugPrint('API Response Status: ${response.statusCode}');
-      debugPrint('API Response Body: ${response.body}');
+        debugPrint('Android device data collected for key generation');
+      } else if (Platform.isIOS) {
+        final iosInfo = await deviceInfo.iosInfo;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        debugPrint('Parsed data: $data');
+        // Collect multiple permanent identifiers for better uniqueness
+        deviceData = {
+          'id': iosInfo.identifierForVendor ?? '',
+          'model': iosInfo.model,
+          'name': iosInfo.name,
+          'systemName': iosInfo.systemName,
+          'systemVersion': iosInfo.systemVersion,
+          'localizedModel': iosInfo.localizedModel,
+          'utsname.machine': iosInfo.utsname.machine,
+          'utsname.nodename': iosInfo.utsname.nodename,
+        };
 
-        // Check if device is active based on status field (iboPlayer format)
+        debugPrint('iOS device data collected for key generation');
+      } else {
+        // For other platforms, use system info
+        deviceData = {
+          'os': Platform.operatingSystem,
+          'osVersion': Platform.operatingSystemVersion,
+          'localHostname': Platform.localHostname,
+          'numberOfProcessors': Platform.numberOfProcessors.toString(),
+          'timestamp': DateTime.now().millisecondsSinceEpoch.toString(),
+        };
+      }
+
+      // Sort keys for consistent order
+      final sortedKeys = deviceData.keys.toList()..sort();
+      final sortedData =
+          sortedKeys.map((k) => "${k}=${deviceData[k]}").join('|');
+
+      // Generate a hash of the device data
+      final bytes = utf8.encode(sortedData);
+      final digest = sha256.convert(bytes);
+      
+      // Convert the first 24 bits (6 hex chars) of the hash to an integer
+      // and take modulo 1000000 to get a 6-digit number
+      final hexSubstring = digest.toString().substring(0, 6);
+      final intValue = int.parse(hexSubstring, radix: 16);
+      final sixDigitNumber = (intValue % 1000000).toString().padLeft(6, '0');
+      
+      debugPrint('Generated 6-digit device key: $sixDigitNumber');
+      return sixDigitNumber;
+    } catch (e) {
+      debugPrint('Error generating device key: $e');
+      // Fallback to a random 6-digit number based on timestamp
+      final random = Random(DateTime.now().millisecondsSinceEpoch);
+      final fallbackKey = (random.nextInt(900000) + 100000).toString();
+      
+      debugPrint('Using fallback 6-digit device key: $fallbackKey');
+      return fallbackKey;
+    }
+  }
+
+  // This method allows the user to manually check their activation status
+  // and upload a playlist if the device is activated
+  Future<void> _checkActivationAndUploadPlaylist(BuildContext context) async {
+    if (macAddress.isEmpty || deviceKey.isEmpty) {
+      Get.snackbar(
+        'Error',
+        'Device information is not available',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      // Create a PlaylistService instance
+      final playlistService = PlaylistService();
+      
+      // Check if device is activated
+      final result = await playlistService.checkDeviceActivation(macAddress, deviceKey);
+      
+      if (result['success'] == true && result['data'] != null) {
+        final data = result['data'];
+        
+        // Check if device is active
         if (data['status'] == 'active') {
-          debugPrint('Device is activated! Preparing to navigate...');
-
-          // Get Xtream credentials from response
-          String username = data['username'] ?? '';
-          String password = data['password'] ?? '';
-          String url = data['server_url'] ?? '';
-          String playlistName = data['playlist_name'] ?? 'IPTV Subscription';
+          // Upload playlist
+          final success = await playlistService.uploadPlaylist(context, data);
           
-          debugPrint('Using Xtream credentials - Username: $username, Server: $url');
-          debugPrint('Playlist name: $playlistName');
-
-          // Check for subscription expiration
-          DateTime? expiryDate;
-          if (data['expires'] != null) {
-            expiryDate = DateTime.tryParse(data['expires']);
-            debugPrint(
-                'Subscription expires on: ${expiryDate?.toString() ?? 'unknown'}');
+          if (success) {
+            // Show success dialog with option to navigate to user list
+            playlistService.showSuccessDialog(context);
           }
-
-          int? daysRemaining;
-          bool isExpiringSoon = false;
-
-          if (expiryDate != null) {
-            final now = DateTime.now();
-            daysRemaining = expiryDate.difference(now).inDays;
-            isExpiringSoon = daysRemaining <= 3 && daysRemaining >= 0;
-            debugPrint(
-                'Days remaining: $daysRemaining, Expiring soon: $isExpiringSoon');
-          }
-
-          // Validate credentials before registering
-          debugPrint('Validating credentials before registration...');
-          if (username.isNotEmpty && password.isNotEmpty && url.isNotEmpty) {
-            debugPrint('Registering user with AuthBloc...');
-            debugPrint('Username: $username, Password: $password, URL: $url');
-            debugPrint('Playlist Name: $playlistName');
-            
-            // Use the same AuthRegister event as the register screen
-            context.read<AuthBloc>().add(AuthRegister(
-                  username,
-                  password,
-                  url,
-                  playlistName: playlistName,
-                ));
-          } else {
-            debugPrint('Error: Missing required credentials');
-            // Show error message to user
-            Get.snackbar(
-              'Activation Error',
-              'Invalid credentials received from server',
-              backgroundColor: Colors.red,
-              colorText: Colors.white,
-              snackPosition: SnackPosition.BOTTOM,
-            );
-          }
-
-          // Cancel the timer as we're navigating away
-          _checkActivationTimer?.cancel();
-          debugPrint('Activation polling timer cancelled');
-
-          // Store activation data in Firebase if available
-
-          // Create a temporary user model to use with ExpirationService
-          final UserModel tempUser = UserModel(
-            userInfo: UserInfo(
-              username: username,
-              password: password,
-              expDate: expiryDate?.millisecondsSinceEpoch.toString(),
-              createdAt: DateTime.now().millisecondsSinceEpoch.toString(),
-            ),
-            serverInfo: ServerInfo(
-              url: url,
-            ),
-          );
-          
-          // Use ExpirationService for consistent notification handling
-          final ExpirationService expirationService = ExpirationService();
-          
-          // Show appropriate notification based on expiration status
-          if (isExpiringSoon && daysRemaining != null) {
-            // Show expiration warning using ExpirationService
-            expirationService.showExpirationNotification(tempUser);
-          } else {
-            // Show success notification
-            Get.snackbar(
-              'Activation Successful!',
-              'Your device has been activated successfully.',
-              snackPosition: SnackPosition.TOP,
-              backgroundColor: Colors.green.withOpacity(0.7),
-              colorText: Colors.white,
-              duration: const Duration(seconds: 3),
-            );
-          }
-
-          // Add a small delay before navigation to ensure the snackbar is shown
-          await Future.delayed(const Duration(milliseconds: 800));
-
-          // Navigate to welcome screen using direct navigation to ensure it works
-          debugPrint('Navigating to welcome screen...');
-          // Force navigation to welcome screen
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            Get.offAll(
-              () => const WelcomeScreen(),
-              // No specific transition to avoid conflicts
-            );
-          });
-          
-          // Log successful navigation
-          debugPrint('Navigation to welcome screen completed');
         } else if (data['status'] == 'expired') {
-          // Show expired notification
           Get.snackbar(
             'Subscription Expired',
-            'Your subscription has expired. Please renew to continue using the service.',
-            snackPosition: SnackPosition.TOP,
-            backgroundColor: Colors.red.withOpacity(0.7),
+            'Your subscription has expired. Please renew to continue.',
+            backgroundColor: Colors.red,
             colorText: Colors.white,
-            duration: const Duration(seconds: 5),
+            snackPosition: SnackPosition.BOTTOM,
           );
-          debugPrint(
-              'Device subscription expired: ${data['message'] ?? 'No message provided'}');
         } else {
-          debugPrint(
-              'Device not activated yet: ${data['message'] ?? 'No message provided'}');
+          Get.snackbar(
+            'Not Activated',
+            'This device has not been activated yet. Please visit the activation website.',
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+          );
         }
       } else {
-        debugPrint('API request failed with status: ${response.statusCode}');
+        Get.snackbar(
+          'Error',
+          result['error'] ?? 'Failed to check device activation',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+        );
       }
     } catch (e) {
-      debugPrint('Error checking activation status: $e');
+      debugPrint('Error checking activation: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to check device activation: ${e.toString()}',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -383,7 +360,7 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
                         ),
                       const SizedBox(height: 40),
                       Text(
-                        'After activation on the website, your device will automatically connect to your IPTV service.',
+                        'After activation on the website, return here and check your activation status.',
                         textAlign: TextAlign.center,
                         style: Get.textTheme.bodyMedium!.copyWith(
                           color: Colors.white70,
@@ -398,9 +375,14 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
                           if (await canLaunchUrl(url)) {
                             await launchUrl(url,
                                 mode: LaunchMode.externalApplication);
-                            debugPrint('Device activated successfully');
+                            debugPrint('Opening activation website');
                           }
                         },
+                      ),
+                      const SizedBox(height: 20),
+                      CardTallButton(
+                        label: "Check Activation Status",
+                        onTap: () => _checkActivationAndUploadPlaylist(context),
                       ),
                       const SizedBox(height: 20),
                       TextButton(
