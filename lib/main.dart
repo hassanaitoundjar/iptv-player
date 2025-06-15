@@ -159,6 +159,9 @@ class _MyAppState extends State<MyApp> {
                     name: screenSeriesCategories,
                     page: () => const SeriesCategoriesScreen()),
                 GetPage(
+                    name: screenDeviceActivation,
+                    page: () => const DeviceActivationScreen()),
+                GetPage(
                     name: screenSettings, page: () => const SettingsScreen()),
                 GetPage(
                     name: screenFavourite, page: () => const FavouriteScreen()),

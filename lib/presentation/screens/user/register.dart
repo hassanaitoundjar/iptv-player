@@ -172,6 +172,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     ),
                                   ),
                                 ),
+                                TextButton.icon(
+                                  icon: const Icon(
+                                    FontAwesomeIcons.mobileScreen,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    Get.toNamed(screenDeviceActivation);
+                                  },
+                                  label: Text(
+                                    'ACTIVATE DEVICE',
+                                    style: Get.theme.textTheme.bodyMedium!.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ],

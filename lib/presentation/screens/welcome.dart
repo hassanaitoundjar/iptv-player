@@ -8,8 +8,6 @@ class WelcomeScreen extends StatefulWidget {
 }
 
 class _WelcomeScreenState extends State<WelcomeScreen> {
-
-
   @override
   void initState() {
     context.read<FavoritesCubit>().initialData();
@@ -50,7 +48,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               icon: kIconLive,
                               onTap: () {
                                 Get.toNamed(screenLiveCategories)!;
-
                               },
                             );
                           }
@@ -73,7 +70,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               icon: kIconMovies,
                               onTap: () {
                                 Get.toNamed(screenMovieCategories)!;
-
                               },
                             );
                           }
@@ -96,7 +92,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               icon: kIconSeries,
                               onTap: () {
                                 Get.toNamed(screenSeriesCategories)!;
-
                               },
                             );
                           }

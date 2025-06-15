@@ -165,6 +165,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               SizedBox(
                                 width: 30.w,
                                 child: CardButtonWatchMovie(
+                                  title: "Activate Device",
+                                  onTap: () {
+                                    Get.toNamed(screenDeviceActivation);
+                                  },
+                                ),
+                              ),
+                              SizedBox(height: 5.h),
+                              SizedBox(
+                                width: 30.w,
+                                child: CardButtonWatchMovie(
                                   title: "LogOut",
                                   onTap: () {
                                     context.read<AuthBloc>().add(AuthLogOut());
