@@ -1,88 +1,103 @@
-part of '../screens.dart';
+part of '../screens.dart'; // تضمين هذا الملف كجزء من ملف screens.dart الرئيسي
 
 class LiveCategoriesScreen extends StatefulWidget {
-  const LiveCategoriesScreen({super.key});
+  // تعريف واجهة من نوع Stateful لأنها تحتاج لإدارة الحالة
+  const LiveCategoriesScreen({super.key}); // مُنشئ بدون مفتاح خاص
 
   @override
-  State<LiveCategoriesScreen> createState() => _LiveCategoriesScreenState();
+  State<LiveCategoriesScreen> createState() => _LiveCategoriesScreenState(); // إنشاء الحالة الخاصة بالواجهة
 }
 
 class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
-  final ScrollController _hideButtonController = ScrollController();
-  bool _hideButton = true;
-  String keySearch = "";
-
-  // Ad-related code removed
+  final ScrollController _hideButtonController =
+      ScrollController(); // متحكم بالتمرير لاستخدامه في إظهار/إخفاء الزر العائم
+  bool _hideButton = true; // متغير لتحديد ما إذا كان الزر العائم مخفي أم لا
+  String keySearch = ""; // متغير لتخزين قيمة البحث
 
   @override
   void initState() {
-    //Wakelock.enable();
+    // إضافة مستمع لحركة التمرير لتحديد اتجاه التمرير
     _hideButtonController.addListener(() {
       if (_hideButtonController.position.userScrollDirection ==
           ScrollDirection.reverse) {
+        // إذا كان التمرير للأسفل
         if (_hideButton == true) {
           setState(() {
-            _hideButton = false;
+            _hideButton = false; // إخفاء الزر العائم
           });
         }
       } else {
         if (_hideButtonController.position.userScrollDirection ==
             ScrollDirection.forward) {
+          // إذا كان التمرير للأعلى
           if (_hideButton == false) {
             setState(() {
-              _hideButton = true;
+              _hideButton = true; // إظهار الزر العائم
             });
           }
         }
       }
     });
-    super.initState();
+    super.initState(); // استدعاء التهيئة الأساسية
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // بناء واجهة التطبيق باستخدام Scaffold
       floatingActionButton: Visibility(
-        visible: !_hideButton,
+        // إظهار أو إخفاء الزر العائم بناءً على التمرير
+        visible: !_hideButton, // إظهار الزر فقط إذا كان _hideButton = false
         child: FloatingActionButton(
           onPressed: () {
             setState(() {
-              _hideButtonController.animateTo(0,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.ease);
-              _hideButton = true;
+              _hideButtonController.animateTo(
+                0, // التمرير إلى الأعلى عند الضغط على الزر
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.ease,
+              );
+              _hideButton = true; // تحديث الحالة لإخفاء الزر بعد العودة للأعلى
             });
           },
-          backgroundColor: kColorPrimaryDark,
+          backgroundColor: kColorPrimaryDark, // لون خلفية الزر
           child: const Icon(
-            FontAwesomeIcons.chevronUp,
-            color: Colors.white,
+            FontAwesomeIcons.chevronUp, // رمز السهم لأعلى
+            color: Colors.white, // لون الرمز
           ),
         ),
       ),
       body: Stack(
-        alignment: Alignment.bottomCenter,
+        // استخدام Stack لترتيب العناصر فوق بعضها
+        alignment: Alignment.bottomCenter, // محاذاة العناصر أسفل الشاشة
         children: [
           Ink(
-            width: 100.w,
-            height: 100.h,
-            decoration: kDecorBackground,
-            // padding: EdgeInsets.symmetric(vertical: 5.h, horizontal: 10),
+            // عنصر حاوية للخلفية بتأثير حبر
+            width: 100.w, // عرض بنسبة 100% من الشاشة
+            height: 100.h, // ارتفاع بنسبة 100% من الشاشة
+            decoration: kDecorBackground, // تعيين خلفية مخصصة
             child: NestedScrollView(
-              controller: _hideButtonController,
+              // ScrollView يمكن أن يحتوي على رأس ومحتوى
+              controller: _hideButtonController, // التحكم بالتمرير
               headerSliverBuilder: (_, ch) {
                 return [
                   SliverAppBar(
-                    automaticallyImplyLeading: false,
-                    elevation: 0,
-                    backgroundColor: Colors.transparent,
+                    // شريط علوي يمكن أن يتم تمريره مع المحتوى
+                    automaticallyImplyLeading:
+                        false, // إخفاء زر الرجوع التلقائي
+                    elevation: 0, // بدون ظل
+                    backgroundColor: Colors.transparent, // شفاف
                     flexibleSpace: FlexibleSpaceBar(
                       background: AppBarLive(
+                        // مكون يحتوي على شريط بحث مخصص
                         onSearch: (String value) {
+                          // دالة يتم تنفيذها عند كتابة نص في شريط البحث
                           setState(() {
-                            keySearch = value.toLowerCase();
+                            keySearch = value
+                                .toLowerCase(); // تحديث كلمة البحث وتحويلها لحروف صغيرة
                           });
-                          debugPrint("search :$keySearch");
+                          debugPrint(
+                            "search :$keySearch",
+                          ); // طباعة كلمة البحث للمطور
                         },
                       ),
                     ),
@@ -90,19 +105,29 @@ class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
                 ];
               },
               body: BlocBuilder<LiveCatyBloc, LiveCatyState>(
+                // الاستماع لتغير حالة Bloc للفئات
                 builder: (context, state) {
                   if (state is LiveCatyLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    // إذا كانت البيانات قيد التحميل
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    ); // إظهار مؤشر تحميل
                   } else if (state is LiveCatySuccess) {
-                    final categories = state.categories;
+                    // عند نجاح تحميل البيانات
+                    final categories =
+                        state.categories; // الحصول على قائمة الفئات
 
+                    // فلترة الفئات حسب كلمة البحث
                     List<CategoryModel> searchCaty = categories
-                        .where((element) => element.categoryName!
-                            .toLowerCase()
-                            .contains(keySearch))
+                        .where(
+                          (element) => element.categoryName!
+                              .toLowerCase()
+                              .contains(keySearch),
+                        ) // مطابقة الاسم مع كلمة البحث
                         .toList();
 
                     return GridView.builder(
+                      // عرض الفئات داخل شبكة
                       padding: const EdgeInsets.only(
                         left: 10,
                         right: 10,
@@ -110,26 +135,31 @@ class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
                         bottom: 80,
                       ),
                       itemCount: keySearch.isNotEmpty
-                          ? searchCaty.length
-                          : categories.length,
+                          ? searchCaty
+                                .length // إذا كان هناك بحث، نعرض النتائج فقط
+                          : categories.length, // إذا لا يوجد بحث، نعرض الكل
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        childAspectRatio: 4.8,
-                      ),
+                            crossAxisCount: 3, // عدد الأعمدة
+                            crossAxisSpacing: 10, // المسافة بين الأعمدة
+                            mainAxisSpacing: 10, // المسافة بين الصفوف
+                            childAspectRatio: 4.8, // نسبة عرض إلى ارتفاع العنصر
+                          ),
                       itemBuilder: (_, i) {
                         final model = keySearch.isNotEmpty
-                            ? searchCaty[i]
-                            : categories[i];
+                            ? searchCaty[i] // العنصر حسب البحث
+                            : categories[i]; // أو العنصر الكامل
 
                         return CardLiveItem(
-                          title: model.categoryName ?? "",
+                          // عنصر بطاقة لعرض الفئة
+                          title: model.categoryName ?? "", // اسم الفئة
                           onTap: () {
-                            /// OPEN Channels
-                            Get.to(() => LiveChannelsScreen(
-                                    catyId: model.categoryId ?? ''));
+                            // عند الضغط، الانتقال إلى شاشة القنوات الخاصة بالفئة
+                            Get.to(
+                              () => LiveChannelsScreen(
+                                catyId: model.categoryId ?? '',
+                              ),
+                            ); // تمرير معرف الفئة
                           },
                         );
                       },
@@ -137,7 +167,8 @@ class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
                   }
 
                   return const Center(
-                    child: Text("Failed to load data..."),
+                    // في حال فشل تحميل البيانات
+                    child: Text("Failed to load data..."), // رسالة فشل
                   );
                 },
               ),

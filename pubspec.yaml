@@ -28,7 +28,7 @@ dependencies:
   #Logic
   flutter_bloc: ^8.1.6
   get: ^4.6.6
-  intl: ^0.19.0
+  intl: ^0.20.2
   get_storage: ^2.1.1
   url_launcher: ^6.3.0
  # wakelock: ^0.6.2
@@ -44,6 +44,10 @@ dependencies:
 
   #Http
   dio: ^5.6.0
+  firebase_core: ^3.14.0
+  firebase_auth: ^5.6.0
+  cloud_firestore: ^5.6.9
+  firebase_core_platform_interface: ^5.4.0
   # google_mobile_ads removed
 
 

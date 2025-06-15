@@ -13,6 +13,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   final _url = TextEditingController();
+  final _playlistName = TextEditingController();
 
   _convertM3utoXtreme(style) {
     showDialog(
@@ -83,6 +84,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _url.dispose();
     _username.dispose();
     _password.dispose();
+    _playlistName.dispose();
     super.dispose();
   }
 
@@ -134,30 +136,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   FontAwesomeIcons.chevronLeft,
                                   color: Colors.white,
                                 )),
-                            TextButton.icon(
-                              icon: const Icon(
-                                FontAwesomeIcons.link,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                              onPressed: () {
-                                _convertM3utoXtreme(style);
-                              },
-                              label: Text(
-                                'ADD M3U',
-                                style:
-                                    Get.theme.textTheme.bodyMedium!.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                            Row(
+                              children: [
+                                TextButton.icon(
+                                  icon: const Icon(
+                                    FontAwesomeIcons.users,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    Get.toNamed(screenUsersList);
+                                  },
+                                  label: Text(
+                                    'SAVED USERS',
+                                    style: Get.theme.textTheme.bodyMedium!.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                TextButton.icon(
+                                  icon: const Icon(
+                                    FontAwesomeIcons.link,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                  onPressed: () {
+                                    _convertM3utoXtreme(style);
+                                  },
+                                  label: Text(
+                                    'ADD M3U',
+                                    style: Get.theme.textTheme.bodyMedium!.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                         Expanded(
                           child: SingleChildScrollView(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -233,11 +254,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   style: style,
                                 ),
                                 const SizedBox(height: 15),
+                                TextField(
+                                  controller: _playlistName,
+                                  decoration: InputDecoration(
+                                    hintText: "Playlist Name",
+                                    hintStyle:
+                                        Get.textTheme.bodyMedium!.copyWith(
+                                      color: Colors.grey,
+                                    ),
+                                    suffixIcon: const Icon(
+                                      FontAwesomeIcons.list,
+                                      size: 18,
+                                      color: kColorPrimary,
+                                    ),
+                                  ),
+                                  style: style,
+                                ),
+                                const SizedBox(height: 15),
                                 Align(
                                   alignment: Alignment.centerLeft,
                                   child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
@@ -248,8 +285,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       const SizedBox(width: 8),
                                       Text(
                                         'By registering, you are agreeing to our ',
-                                        style: Get.textTheme.bodyMedium!
-                                            .copyWith(
+                                        style:
+                                            Get.textTheme.bodyMedium!.copyWith(
                                           color: Colors.white70,
                                         ),
                                       ),
@@ -264,8 +301,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           'privacy policy.',
                                           style: Get.textTheme.bodyMedium!
                                               .copyWith(
-                                            color: kColorPrimary
-                                                .withOpacity(.70),
+                                            color:
+                                                kColorPrimary.withOpacity(.70),
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
@@ -292,6 +329,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                       _username.text,
                                       _password.text,
                                       _url.text,
+                                      playlistName: _playlistName.text,
                                     ));
                               }
                             },

@@ -11,12 +11,14 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
   final _username = TextEditingController();
   final _password = TextEditingController();
   final _domain = TextEditingController();
+  final _playlistName = TextEditingController();
 
   int indexTab = 0;
 
   final FocusNode focusNode0 = FocusNode();
   final FocusNode focusNode1 = FocusNode();
   final FocusNode focusNode2 = FocusNode();
+  final FocusNode focusNode3 = FocusNode();
   final FocusNode _remoteFocus = FocusNode();
 
   _onKey(RawKeyEvent event) {
@@ -30,6 +32,8 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
         indexTab = 2;
       } else if (indexTab == 2) {
         indexTab = 3;
+      } else if (indexTab == 3) {
+        indexTab = 4;
       }
     } else if (event.isKeyPressed(LogicalKeyboardKey.arrowUp)) {
       debugPrint('up');
@@ -40,6 +44,8 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
         indexTab = 1;
       } else if (indexTab == 3) {
         indexTab = 2;
+      } else if (indexTab == 4) {
+        indexTab = 3;
       }
     } else if (event.isKeyPressed(LogicalKeyboardKey.select)) {
       debugPrint("enter");
@@ -51,6 +57,8 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
       } else if (indexTab == 2) {
         focusNode2.requestFocus();
       } else if (indexTab == 3) {
+        focusNode3.requestFocus();
+      } else if (indexTab == 4) {
         debugPrint("Login");
         _login();
       }
@@ -72,7 +80,9 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
     focusNode0.dispose();
     focusNode1.dispose();
     focusNode2.dispose();
+    focusNode3.dispose();
     _remoteFocus.dispose();
+    _playlistName.dispose();
 
     super.dispose();
   }
@@ -85,6 +95,7 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
             _username.text,
             _password.text,
             _domain.text,
+            playlistName: _playlistName.text,
           ));
     }
   }
@@ -114,9 +125,7 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                     listener: (context, state) {
                       if (state is AuthSuccess) {
                         context.read<LiveCatyBloc>().add(GetLiveCategories());
-                        context
-                            .read<MovieCatyBloc>()
-                            .add(GetMovieCategories());
+                        context.read<MovieCatyBloc>().add(GetMovieCategories());
                         context
                             .read<SeriesCatyBloc>()
                             .add(GetSeriesCategories());
@@ -210,16 +219,52 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                                         },
                                       ),
                                       const SizedBox(height: 15),
+                                      CardInputTv(
+                                        label: "Playlist Name",
+                                        controller: _playlistName,
+                                        icon: FontAwesomeIcons.list,
+                                        focusNode: focusNode3,
+                                        isEnabled: indexTab == 3,
+                                        isFocused: indexTab == 3,
+                                        onTap: () {
+                                          setState(() {
+                                            indexTab = 3;
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(height: 15),
                                       SizedBox(
                                         width: getSize(context).width,
                                         height: 50,
                                         child: CardButtonWatchMovie(
-                                          isFocused: indexTab == 3,
+                                          isFocused: indexTab == 4,
                                           onFocusChanged: (value) {},
                                           onTap: () {
                                             _login();
                                           },
                                           title: 'Login',
+                                        ),
+                                      ),
+                                      SizedBox(height: 5.h),
+                                      SizedBox(
+                                        width: 30.w,
+                                        child: CardButtonWatchMovie(
+                                          title: "Saved Users",
+                                          onTap: () {
+                                            Get.toNamed(screenUsersList);
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(height: 5.h),
+                                      SizedBox(
+                                        width: 30.w,
+                                        child: CardButtonWatchMovie(
+                                          title: "LogOut",
+                                          onTap: () {
+                                            context.read<AuthBloc>().add(AuthLogOut());
+                                            Get.offAllNamed("/");
+                                            Get.reload();
+                                          },
                                         ),
                                       ),
                                     ],

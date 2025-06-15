@@ -34,6 +34,8 @@ class UserInfo {
   final String? createdAt;
   final String? maxConnections;
   final List<String>? allowedOutputFormats;
+  final String? playlistName;
+  final String? playlistPin;
 
   UserInfo({
     this.username,
@@ -47,6 +49,8 @@ class UserInfo {
     this.createdAt,
     this.maxConnections,
     this.allowedOutputFormats,
+    this.playlistName,
+    this.playlistPin,
   });
 
   UserInfo.fromJson(Map<String, dynamic> json)
@@ -62,7 +66,9 @@ class UserInfo {
         maxConnections = json['max_connections'].toString(),
         allowedOutputFormats = (json['allowed_output_formats'] as List?)
             ?.map((dynamic e) => e.toString())
-            .toList();
+            .toList(),
+        playlistName = json['playlist_name'] as String?,
+        playlistPin = json['playlist_pin'] as String?;
 
   Map<String, dynamic> toJson() => {
         'username': username,
@@ -75,7 +81,9 @@ class UserInfo {
         'active_cons': activeCons,
         'created_at': createdAt,
         'max_connections': maxConnections,
-        'allowed_output_formats': allowedOutputFormats
+        'allowed_output_formats': allowedOutputFormats,
+        'playlist_name': playlistName,
+        'playlist_pin': playlistPin,
       };
 }
 

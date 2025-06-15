@@ -3,8 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 import 'package:player/repository/api/api.dart';
+import 'package:player/repository/services/firebase_service.dart';
+import 'package:player/repository/services/expiration_service.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'helpers/helpers.dart';
 import 'logic/blocs/auth/auth_bloc.dart';
@@ -20,28 +24,60 @@ import 'presentation/screens/screens.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // await Wakelock.enable();
   await GetStorage.init();
   await GetStorage.init("favorites");
-  // Ad initialization removed
+  
+  // Initialize Firebase with configuration
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase initialized successfully');
+  } catch (e) {
+    print('Failed to initialize Firebase: $e');
+  }
+  
+  // Create service instances
+  final firebaseService = FirebaseService();
+  final expirationService = ExpirationService();
+  final iptv = IpTvApi();
+  final authApi = AuthApi();
+  final watchingLocale = WatchingLocale();
+  final favoriteLocale = FavoriteLocale();
+  
+  // Check for subscription expiration on app startup
+  try {
+    final localeUser = await LocaleApi.getUser();
+    if (localeUser != null) {
+      // Schedule the notification check for after the UI is built
+      Future.delayed(const Duration(seconds: 2), () {
+        expirationService.showExpirationNotification(localeUser);
+      });
+    }
+  } catch (e) {
+    print('Error checking subscription on startup: $e');
+  }
 
   runApp(MyApp(
-    iptv: IpTvApi(),
-    authApi: AuthApi(),
-    watchingLocale: WatchingLocale(),
-    favoriteLocale: FavoriteLocale(),
+    iptv: iptv,
+    authApi: authApi,
+    firebaseService: firebaseService,
+    watchingLocale: watchingLocale,
+    favoriteLocale: favoriteLocale,
   ));
 }
 
 class MyApp extends StatefulWidget {
   final IpTvApi iptv;
   final AuthApi authApi;
+  final FirebaseService firebaseService;
   final WatchingLocale watchingLocale;
   final FavoriteLocale favoriteLocale;
   const MyApp(
       {super.key,
       required this.iptv,
       required this.authApi,
+      required this.firebaseService,
       required this.watchingLocale,
       required this.favoriteLocale});
 
@@ -127,6 +163,7 @@ class _MyAppState extends State<MyApp> {
                 GetPage(
                     name: screenFavourite, page: () => const FavouriteScreen()),
                 GetPage(name: screenCatchUp, page: () => const CatchUpScreen()),
+                GetPage(name: screenUsersList, page: () => const UsersListScreen()),
               ],
             );
           },

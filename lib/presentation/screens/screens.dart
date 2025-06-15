@@ -61,6 +61,8 @@ part 'user/settings.dart';
 part 'user/splash.dart';
 part 'user/intro.dart';
 part 'user/favourites.dart';
+part 'user/users_list.dart';
+part 'user/pin_verification.dart';
 part 'welcome.dart';
 part 'user/catch_up.dart';
 

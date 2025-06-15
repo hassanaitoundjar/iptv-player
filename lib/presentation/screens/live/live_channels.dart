@@ -1,64 +1,74 @@
+// استيراد جزء من ملفات الشاشة
 part of '../screens.dart';
 
+// تعريف واجهة الشاشة LiveChannelsScreen كودجت ذات حالة (Stateful)
 class LiveChannelsScreen extends StatefulWidget {
   const LiveChannelsScreen({super.key, required this.catyId});
-  final String catyId;
+  final String catyId; // معرّف الفئة المستخدمة لعرض القنوات الحية
 
   @override
   State<LiveChannelsScreen> createState() => _ListChannelsScreen();
 }
 
+// الحالة المرتبطة بشاشة LiveChannelsScreen
 class _ListChannelsScreen extends State<LiveChannelsScreen> {
-  VlcPlayerController? _videoPlayerController;
+  VlcPlayerController? _videoPlayerController; // المتحكم في مشغل الفيديو VLC
 
-  int? selectedVideo;
-  String? selectedStreamId;
-  ChannelLive? channelLive;
-  double lastPosition = 0.0;
-  String keySearch = "";
-  final FocusNode _remoteFocus = FocusNode();
+  int? selectedVideo; // رقم الفيديو المحدد
+  String? selectedStreamId; // معرف البث المباشر المحدد
+  ChannelLive? channelLive; // القناة الحالية المحددة
+  double lastPosition = 0.0; // آخر موقع تم الوصول إليه في الفيديو
+  String keySearch = ""; // مفتاح البحث عن القنوات
+  final FocusNode _remoteFocus = FocusNode(); // عنصر التركيز للتحكم عن بعد
 
+  // دالة لتهيئة تشغيل الفيديو من خلال معرف البث
   _initialVideo(String streamId) async {
+    // استدعاء بيانات المستخدم من التخزين المحلي
     UserModel? user = await LocaleApi.getUser();
 
+    // إذا تم تهيئة المشغل مسبقاً، نقوم بإيقافه أولاً
     if (_videoPlayerController != null &&
         _videoPlayerController!.value.isInitialized) {
-      _videoPlayerController!.pause();
-      _videoPlayerController!.stop();
+      _videoPlayerController!.pause(); // إيقاف مؤقت
+      _videoPlayerController!.stop(); // إيقاف كامل
       _videoPlayerController = null;
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 300)); // تأخير بسيط
     } else {
       _videoPlayerController = null;
-      setState(() {});
+      setState(() {}); // تحديث واجهة المستخدم
       await Future.delayed(const Duration(milliseconds: 300));
     }
 
+    // توليد رابط تشغيل الفيديو
     var videoUrl =
         "${user!.serverInfo!.serverUrl}/${user.userInfo!.username}/${user.userInfo!.password}/$streamId";
 
-    debugPrint("Load Video: $videoUrl");
+    debugPrint("Load Video: $videoUrl"); // طباعة الرابط في وحدة التصحيح
+
+    // إعداد المتحكم الجديد لمشغل الفيديو باستخدام VLC
     _videoPlayerController = VlcPlayerController.network(
       videoUrl,
-      hwAcc: HwAcc.full,
-      autoPlay: true,
+      hwAcc: HwAcc.full, // استخدام تسريع العتاد الكامل
+      autoPlay: true, // التشغيل التلقائي
       options: VlcPlayerOptions(
         advanced: VlcAdvancedOptions([
-          VlcAdvancedOptions.networkCaching(2000),
-          VlcAdvancedOptions.liveCaching(2000),
+          VlcAdvancedOptions.networkCaching(2000), // التخزين المؤقت للشبكة
+          VlcAdvancedOptions.liveCaching(2000), // التخزين المؤقت للبث المباشر
         ]),
         http: VlcHttpOptions([
-          VlcHttpOptions.httpReconnect(true),
+          VlcHttpOptions.httpReconnect(true), // إعادة الاتصال تلقائياً
         ]),
         rtp: VlcRtpOptions([
-          VlcRtpOptions.rtpOverRtsp(true),
+          VlcRtpOptions.rtpOverRtsp(true), // استخدام بروتوكول RTSP
         ]),
       ),
     );
-    setState(() {});
+    setState(() {}); // إعادة بناء الواجهة لعرض المشغل
   }
 
   @override
   void initState() {
+    // عند بدء الشاشة، نطلب القنوات الحية من Bloc باستخدام معرف الفئة
     context.read<ChannelsBloc>().add(GetLiveChannelsEvent(
           catyId: widget.catyId,
           typeCategory: TypeCategory.live,
@@ -68,8 +78,9 @@ class _ListChannelsScreen extends State<LiveChannelsScreen> {
 
   @override
   void dispose() async {
-    _remoteFocus.dispose();
+    _remoteFocus.dispose(); // تحرير التحكم في التركيز
     super.dispose();
+    // إذا كان المشغل مفعلاً، نوقفه ونتخلص منه بشكل آمن
     if (_videoPlayerController != null) {
       await _videoPlayerController!.stopRendererScanning();
       await _videoPlayerController!.dispose();
@@ -78,23 +89,26 @@ class _ListChannelsScreen extends State<LiveChannelsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // استخدام BlocBuilder لمراقبة حالة الفيديو من VideoCubit
     return BlocBuilder<VideoCubit, VideoState>(
       builder: (context, stateVideo) {
         return WillPopScope(
+          // معالجة زر الرجوع
           onWillPop: () async {
-            debugPrint("Back pressed");
+            debugPrint("Back pressed"); // طباعة عند الضغط على الرجوع
             if (stateVideo.isFull) {
+              // إذا كان الفيديو بوضع ملء الشاشة، نعيده للحجم الطبيعي
               context.read<VideoCubit>().changeUrlVideo(false);
-
-              return Future.value(false);
+              return Future.value(false); // منع الرجوع
             } else {
-              return Future.value(true);
+              return Future.value(true); // السماح بالرجوع
             }
           },
+          // مراقبة حالة تسجيل الدخول من AuthBloc
           child: BlocBuilder<AuthBloc, AuthState>(
             builder: (context, stateAuth) {
               if (stateAuth is AuthSuccess) {
-                final userAuth = stateAuth.user;
+                final userAuth = stateAuth.user; // استخراج بيانات المستخدم
 
                 return Scaffold(
                   body: Stack(

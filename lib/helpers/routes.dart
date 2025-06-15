@@ -8,6 +8,7 @@ const String screenRegisterTv = "/register-tv";
 const String screenSettings = "/settings";
 const String screenFavourite = "/favourite";
 const String screenCatchUp = "/catchup";
+const String screenUsersList = "/users-list";
 const String screenMovies = "/movies";
 const String screenSeries = "/series";
 const String screenLiveCategories = "/categories-live";

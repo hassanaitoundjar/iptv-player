@@ -7,8 +7,10 @@ class AuthRegister extends AuthEvent {
   final String username;
   final String password;
   final String domain;
+  final String playlistName;
+  final String playlistPin;
 
-  AuthRegister(this.username, this.password, this.domain);
+  AuthRegister(this.username, this.password, this.domain, {this.playlistName = "", this.playlistPin = ""});
 }
 
 class AuthGetUser extends AuthEvent {}
