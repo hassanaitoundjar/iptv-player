@@ -38,5 +38,14 @@ class ChannelsBloc extends Bloc<ChannelsEvent, ChannelsState> {
         emit(ChannelsSeriesSuccess(result)); // إرسال الحالة مع القنوات
       }
     });
+    
+    // التعامل مع حدث البحث العام في جميع القنوات المباشرة
+    on<GetAllLiveChannelsEvent>((event, emit) async {
+      emit(ChannelsLoading()); // عرض حالة التحميل
+      
+      // جلب جميع القنوات المباشرة للبحث العام
+      final result = await api.getAllLiveChannels();
+      emit(ChannelsLiveSuccess(result)); // إرسال الحالة مع جميع القنوات المباشرة
+    });
   }
 }

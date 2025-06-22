@@ -27,6 +27,11 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
   double _currentVolume = 0.0;
   double _currentBright = 0.0;
   late Timer timer;
+  
+  // Video speed control
+  double _currentSpeed = 1.0;
+  bool _showSpeedOptions = false;
+  final List<double> _speedOptions = [0.5, 1.0, 1.5, 2.0];
 
   final ScreenBrightnessUtil _screenBrightnessUtil = ScreenBrightnessUtil();
 
@@ -56,10 +61,24 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
     Wakelock.enable();
     _videoPlayerController = VlcPlayerController.network(
       widget.link,
-      hwAcc: HwAcc.full,
+      hwAcc: HwAcc.auto, // Changed from full to auto for better compatibility
       autoPlay: true,
       autoInitialize: true,
-      options: VlcPlayerOptions(),
+      options: VlcPlayerOptions(
+        video: VlcVideoOptions([
+          VlcVideoOptions.dropLateFrames(true),
+          VlcVideoOptions.skipFrames(true),
+          '--no-mediacodec-dr', // Disable direct rendering
+          '--network-caching=1500', // Increase network buffer
+          '--clock-jitter=0', // Reduce clock jitter
+          '--clock-synchro=0', // Disable clock synchro for smoother playback
+        ]),
+        advanced: VlcAdvancedOptions([
+          VlcAdvancedOptions.networkCaching(1500),
+          '--stats', // Enable statistics
+          '--adaptive-maxbuffer=1500', // Adjust buffer size
+        ]),
+      ),
     );
 
     super.initState();
@@ -206,8 +225,84 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
                                     ),
                                   ),
                                 ),
+                                const Spacer(),
+                                // Speed control button - only show for VOD content (movies/series), not for live TV
+                                if (!widget.isLive) // Only show for non-live content
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 16.0),
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          _showSpeedOptions = !_showSpeedOptions;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(FontAwesomeIcons.gauge, size: 14),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${_currentSpeed}x',
+                                              style: const TextStyle(color: Colors.white),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
+                            
+                            // Speed options dropdown - only for VOD content
+                            if (!widget.isLive && _showSpeedOptions)
+                              Align(
+                                alignment: Alignment.topRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 16.0, top: 50.0),
+                                  child: Container(
+                                    width: 80,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black87,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: _speedOptions.map((speed) => InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            _currentSpeed = speed;
+                                            _showSpeedOptions = false;
+                                            // Apply the selected speed
+                                            _videoPlayerController.setPlaybackSpeed(speed);
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: _currentSpeed == speed ? Colors.grey[800] : null,
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '${speed}x',
+                                              style: TextStyle(
+                                                color: _currentSpeed == speed ? Colors.white : Colors.grey[400],
+                                                fontWeight: _currentSpeed == speed ? FontWeight.bold : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      )).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
 
                             ///Slider & Play/Pause
                             if (!progress && !widget.isLive)

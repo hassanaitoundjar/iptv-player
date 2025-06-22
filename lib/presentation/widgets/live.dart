@@ -60,6 +60,7 @@ class _AppBarLiveState extends State<AppBarLive> {
                       onChanged: widget.onSearch,
                       decoration: const InputDecoration(
                         hintText: "Search...",
+                        hintStyle: TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
