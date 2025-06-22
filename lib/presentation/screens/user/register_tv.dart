@@ -261,7 +261,9 @@ class _RegisterUserTvState extends State<RegisterUserTv> {
                                         child: CardButtonWatchMovie(
                                           title: "LogOut",
                                           onTap: () {
-                                            context.read<AuthBloc>().add(AuthLogOut());
+                                            context
+                                                .read<AuthBloc>()
+                                                .add(AuthLogOut());
                                             Get.offAllNamed("/");
                                             Get.reload();
                                           },

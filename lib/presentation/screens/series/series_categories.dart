@@ -120,14 +120,17 @@ class _SeriesCategoriesScreenState extends State<SeriesCategoriesScreen> {
                         final model =
                             keySearch.isEmpty ? categories[i] : searchList[i];
 
-                        return CardLiveItem(
-                          title: model.categoryName ?? "",
-                          onTap: () {
-                            // OPEN Channels
-                            Get.to(() => SeriesChannels(
-                                    catyId: model.categoryId ?? ''))!;
-
-                          },
+                        return ParentalControlWrapper(
+                          contentName: model.categoryName ?? "",
+                          isCategory: true,
+                          child: CardLiveItem(
+                            title: model.categoryName ?? "",
+                            onTap: () {
+                              // OPEN Channels
+                              Get.to(() => SeriesChannels(
+                                      catyId: model.categoryId ?? ''))!;
+                            },
+                          ),
                         );
                       },
                     );

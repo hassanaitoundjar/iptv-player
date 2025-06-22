@@ -150,17 +150,22 @@ class _LiveCategoriesScreenState extends State<LiveCategoriesScreen> {
                             ? searchCaty[i] // العنصر حسب البحث
                             : categories[i]; // أو العنصر الكامل
 
-                        return CardLiveItem(
-                          // عنصر بطاقة لعرض الفئة
-                          title: model.categoryName ?? "", // اسم الفئة
-                          onTap: () {
-                            // عند الضغط، الانتقال إلى شاشة القنوات الخاصة بالفئة
-                            Get.to(
-                              () => LiveChannelsScreen(
-                                catyId: model.categoryId ?? '',
-                              ),
-                            ); // تمرير معرف الفئة
-                          },
+                        // Wrap the category card with parental control
+                        return ParentalControlWrapper(
+                          contentName: model.categoryName ?? "",
+                          isCategory: true,
+                          child: CardLiveItem(
+                            // عنصر بطاقة لعرض الفئة
+                            title: model.categoryName ?? "", // اسم الفئة
+                            onTap: () {
+                              // عند الضغط، الانتقال إلى شاشة القنوات الخاصة بالفئة
+                              Get.to(
+                                () => LiveChannelsScreen(
+                                  catyId: model.categoryId ?? '',
+                                ),
+                              ); // تمرير معرف الفئة
+                            },
+                          ),
                         );
                       },
                     );

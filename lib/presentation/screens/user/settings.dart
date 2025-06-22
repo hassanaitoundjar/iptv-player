@@ -9,7 +9,27 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _pinController = TextEditingController();
+  final ParentalControlService _parentalControlService =
+      ParentalControlService();
   bool _isPinVisible = false;
+  bool _isParentalControlEnabled = false;
+  bool _isParentalPinSet = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadParentalControlSettings();
+  }
+
+  Future<void> _loadParentalControlSettings() async {
+    final isEnabled = await _parentalControlService.isEnabled();
+    final isPinSet = await _parentalControlService.isPinSet();
+
+    setState(() {
+      _isParentalControlEnabled = isEnabled;
+      _isParentalPinSet = isPinSet;
+    });
+  }
 
   @override
   void dispose() {
@@ -152,7 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   },
                                 ),
                               ),
-                              SizedBox(height: 5.h),
+                              const SizedBox(height: 10),
                               SizedBox(
                                 width: 30.w,
                                 child: CardButtonWatchMovie(
@@ -160,6 +180,108 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   onTap: () {
                                     _showPinDialog(context, userInfo);
                                   },
+                                ),
+                              ),
+                              SizedBox(height: 2.h),
+                              // Parental Control Section
+                              Container(
+                                width: 30.w,
+                                decoration: BoxDecoration(
+                                  color: kColorCardDark,
+                                  borderRadius: BorderRadius.circular(5),
+                                ),
+                                padding: const EdgeInsets.all(15),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Parental Controls",
+                                      style:
+                                          Get.textTheme.titleMedium!.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 15),
+                                    // Enable/Disable Parental Control
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          "Enable Parental Control",
+                                          style: Get.textTheme.bodyMedium!
+                                              .copyWith(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        Switch(
+                                          value: _isParentalControlEnabled,
+                                          onChanged: (value) async {
+                                            if (value && !_isParentalPinSet) {
+                                              // Show PIN setup dialog if enabling and PIN not set
+                                              final pinSet =
+                                                  await _parentalControlService
+                                                      .showPinSetupDialog(
+                                                          context);
+                                              if (pinSet) {
+                                                setState(() {
+                                                  _isParentalControlEnabled =
+                                                      true;
+                                                  _isParentalPinSet = true;
+                                                });
+                                              }
+                                            } else {
+                                              await _parentalControlService
+                                                  .setEnabled(value);
+                                              setState(() {
+                                                _isParentalControlEnabled =
+                                                    value;
+                                              });
+                                            }
+                                          },
+                                          activeColor: kColorPrimary,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 15),
+                                    // Change PIN Button
+                                    if (_isParentalPinSet)
+                                      InkWell(
+                                        onTap: () =>
+                                            _showChangeParentalPinDialog(),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10, horizontal: 15),
+                                          decoration: BoxDecoration(
+                                            color: kColorCardLight,
+                                            borderRadius:
+                                                BorderRadius.circular(5),
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                "Change Parental PIN",
+                                                style: Get.textTheme.bodyMedium!
+                                                    .copyWith(
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              const Icon(
+                                                Icons.arrow_forward_ios,
+                                                color: kColorPrimary,
+                                                size: 16,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    const SizedBox(height: 15),
+                                    // Note: Temporary unlock duration section removed
+                                    // We now require PIN verification every time for adult content
+                                  ],
                                 ),
                               ),
                               SizedBox(height: 5.h),
@@ -179,7 +301,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   title: "LogOut",
                                   onTap: () {
                                     context.read<AuthBloc>().add(AuthLogOut());
-                                    Get.offAllNamed("/");
+                                    Get.offAllNamed(screenIntro);
+
                                     Get.reload();
                                   },
                                 ),
@@ -359,6 +482,229 @@ class _SettingsScreenState extends State<SettingsScreen> {
           );
         },
       ),
+    );
+  }
+
+  // Show dialog to change parental control PIN
+  void _showChangeParentalPinDialog() {
+    final TextEditingController oldPinController = TextEditingController();
+    final TextEditingController newPinController = TextEditingController();
+    final TextEditingController confirmPinController = TextEditingController();
+    bool oldPinVisible = false;
+    bool newPinVisible = false;
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.security,
+                    color: Colors.amber,
+                    size: 50,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Change Parental Control PIN',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // Old PIN
+                  TextField(
+                    controller: oldPinController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    obscureText: !oldPinVisible,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      labelText: 'Current PIN',
+                      labelStyle: TextStyle(color: Colors.grey),
+                      hintText: '• • • •',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.amber),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          oldPinVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            oldPinVisible = !oldPinVisible;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // New PIN
+                  TextField(
+                    controller: newPinController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    obscureText: !newPinVisible,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      labelText: 'New PIN',
+                      labelStyle: TextStyle(color: Colors.grey),
+                      hintText: '• • • •',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.amber),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          newPinVisible
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            newPinVisible = !newPinVisible;
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // Confirm PIN
+                  TextField(
+                    controller: confirmPinController,
+                    keyboardType: TextInputType.number,
+                    maxLength: 4,
+                    obscureText: !newPinVisible,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      counterText: '',
+                      labelText: 'Confirm New PIN',
+                      labelStyle: TextStyle(color: Colors.grey),
+                      hintText: '• • • •',
+                      hintStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.amber),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          Get.back();
+                        },
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.amber,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () async {
+                          // Validate inputs
+                          if (oldPinController.text.length != 4 ||
+                              newPinController.text.length != 4 ||
+                              confirmPinController.text.length != 4) {
+                            Get.snackbar(
+                              'Invalid PIN',
+                              'All PINs must be 4 digits.',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                            return;
+                          }
+
+                          if (newPinController.text !=
+                              confirmPinController.text) {
+                            Get.snackbar(
+                              'PIN Mismatch',
+                              'New PIN and confirmation do not match.',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                            return;
+                          }
+
+                          // Try to reset PIN
+                          final success =
+                              await _parentalControlService.resetPin(
+                                  oldPinController.text, newPinController.text);
+
+                          if (success) {
+                            Get.back();
+                            Get.snackbar(
+                              'PIN Changed',
+                              'Your parental control PIN has been updated.',
+                              backgroundColor: Colors.green,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                          } else {
+                            Get.snackbar(
+                              'Incorrect PIN',
+                              'The current PIN you entered is incorrect.',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                          }
+                        },
+                        child: Text(
+                          'Change PIN',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      barrierDismissible: false,
     );
   }
 }

@@ -15,6 +15,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _url = TextEditingController();
   final _playlistName = TextEditingController();
 
+  // TV-specific controllers and focus nodes
+  int indexTab = 0;
+  final FocusNode focusNode0 = FocusNode();
+  final FocusNode focusNode1 = FocusNode();
+  final FocusNode focusNode2 = FocusNode();
+  final FocusNode focusNode3 = FocusNode();
+  final FocusNode _remoteFocus = FocusNode();
+
+  // Determine if we're on a TV platform
+
   _convertM3utoXtreme(style) {
     showDialog(
       context: context,
@@ -149,7 +159,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   },
                                   label: Text(
                                     'SAVED USERS',
-                                    style: Get.theme.textTheme.bodyMedium!.copyWith(
+                                    style: Get.theme.textTheme.bodyMedium!
+                                        .copyWith(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -166,7 +177,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   },
                                   label: Text(
                                     'ADD M3U',
-                                    style: Get.theme.textTheme.bodyMedium!.copyWith(
+                                    style: Get.theme.textTheme.bodyMedium!
+                                        .copyWith(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -183,7 +195,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   },
                                   label: Text(
                                     'ACTIVATE DEVICE',
-                                    style: Get.theme.textTheme.bodyMedium!.copyWith(
+                                    style: Get.theme.textTheme.bodyMedium!
+                                        .copyWith(
                                       color: Colors.white,
                                       fontWeight: FontWeight.bold,
                                     ),

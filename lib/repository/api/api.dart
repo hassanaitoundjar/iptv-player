@@ -20,6 +20,15 @@ part 'auth.dart';
 part 'iptv.dart';
 part '../locale/favorites.dart';
 
-final _dio = Dio();
+// Configure Dio with appropriate settings for IPTV API requests
+final _dio = Dio(BaseOptions(
+  connectTimeout: const Duration(seconds: 30),
+  receiveTimeout: const Duration(seconds: 30),
+  followRedirects: true,
+  maxRedirects: 5,
+  validateStatus: (status) {
+    return status != null && status < 500; // Accept all status codes less than 500
+  },
+));
 final locale = GetStorage();
 final favoritesLocale = GetStorage("favorites");

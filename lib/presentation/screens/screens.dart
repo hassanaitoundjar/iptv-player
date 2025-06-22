@@ -5,7 +5,6 @@ import 'dart:math';
 
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:crypto/crypto.dart';
-import 'package:http/http.dart' as http;
 
 import 'package:filling_slider/filling_slider.dart';
 import 'package:flutter/cupertino.dart';
@@ -27,8 +26,8 @@ import 'package:wakelock/wakelock.dart';
 
 import '../../helpers/helpers.dart';
 import '../../logic/blocs/auth/auth_bloc.dart';
-import '../../repository/services/expiration_service.dart';
 import '../../repository/services/playlist_service.dart';
+import '../../repository/services/parental_control_service.dart';
 import '../../logic/blocs/categories/channels/channels_bloc.dart';
 import '../../logic/blocs/categories/live_caty/live_caty_bloc.dart';
 import '../../logic/blocs/categories/movie_caty/movie_caty_bloc.dart';
@@ -48,6 +47,7 @@ import '../../repository/models/serie_details.dart';
 import '../../repository/models/user.dart';
 import '../../repository/models/watching.dart';
 import '../widgets/widgets.dart';
+import '../widgets/parental_control_wrapper.dart';
 import '../../config/app_config.dart';
 
 part 'live/live_categories.dart';
@@ -61,9 +61,9 @@ part 'series/serie_details.dart';
 part 'series/serie_seasons.dart';
 part 'series/series_categories.dart';
 part 'series/series_channels.dart';
-part 'user/demo.dart';
 part 'user/register.dart';
 part 'user/register_tv.dart';
+part 'user/unified_register.dart';
 part 'user/settings.dart';
 part 'user/splash.dart';
 part 'user/intro.dart';

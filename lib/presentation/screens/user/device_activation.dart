@@ -286,124 +286,185 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Ink(
-        width: getSize(context).width,
-        height: getSize(context).height,
-        decoration: kDecorBackground,
-        child: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isTV = constraints.maxWidth > 1000;
+          
+          return Container(
+            width: constraints.maxWidth,
+            height: constraints.maxHeight,
+            decoration: kDecorBackground,
+            child: SafeArea(
+              child: Column(
                 children: [
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: const Icon(
-                      FontAwesomeIcons.chevronLeft,
-                      color: Colors.white,
+                  // App bar with back button and title
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16, 
+                      vertical: isTV ? 20 : 12
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: () => Get.back(),
+                          icon: const Icon(
+                            FontAwesomeIcons.chevronLeft,
+                            color: Colors.white,
+                          ),
+                          iconSize: isTV ? 28 : 20,
+                        ),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Device Activation',
+                          style: Get.textTheme.titleLarge!.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: isTV ? 28 : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  
+                  // Main content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTV ? 40 : 20,
+                        vertical: isTV ? 30 : 20,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: isTV ? 800 : 600,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Logo
+                              Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.blueAccent.withOpacity(0.1),
+                                ),
+                                child: Image.asset(
+                                  kIconSplash,
+                                  width: isTV ? 100 : 60,
+                                  height: isTV ? 100 : 60,
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 30),
+                              
+                              // Instructions
+                              Text(
+                                'Activate Your Device',
+                                style: Get.textTheme.headlineMedium!.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: isTV ? 32 : null,
+                                ),
+                              ),
+                              const SizedBox(height: 15),
+                              Text(
+                                'Please visit our website and enter the following information to activate your device:',
+                                textAlign: TextAlign.center,
+                                style: Get.textTheme.bodyLarge!.copyWith(
+                                  color: Colors.white70,
+                                  fontSize: isTV ? 18 : null,
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 40),
+                              
+                              // Device info cards
+                              if (isLoading)
+                                SizedBox(
+                                  height: 120,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.purpleAccent,
+                                    ),
+                                  ),
+                                )
+                              else
+                                Column(
+                                  children: [
+                                    _buildInfoCard(
+                                      title: 'MAC Address',
+                                      value: macAddress,
+                                      onTap: () => _copyToClipboard(macAddress),
+                                      isTV: isTV,
+                                    ),
+                                    const SizedBox(height: 20),
+                                    _buildInfoCard(
+                                      title: 'Device Key',
+                                      value: deviceKey,
+                                      onTap: () => _copyToClipboard(deviceKey),
+                                      isTV: isTV,
+                                    ),
+                                  ],
+                                ),
+                              
+                              const SizedBox(height: 40),
+                              
+                              // Action buttons
+                              Text(
+                                'After activation on the website, return here and check your activation status.',
+                                textAlign: TextAlign.center,
+                                style: Get.textTheme.bodyMedium!.copyWith(
+                                  color: Colors.white70,
+                                  fontSize: isTV ? 16 : null,
+                                ),
+                              ),
+                              const SizedBox(height: 30),
+                              
+                              // Action buttons in a responsive grid
+                              Wrap(
+                                spacing: 20,
+                                runSpacing: 20,
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  _buildActionButton(
+                                    icon: Icons.language,
+                                    title: 'Open Activation Website',
+                                    onTap: () async {
+                                      final url = Uri.parse('${AppConfig.webBaseUrl}/activate');
+                                      if (await canLaunchUrl(url)) {
+                                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                                      }
+                                    },
+                                    isTV: isTV,
+                                  ),
+                                  
+                                  _buildActionButton(
+                                    icon: Icons.check_circle_outline,
+                                    title: 'Check Activation Status',
+                                    onTap: () => _checkActivationAndUploadPlaylist(context),
+                                    isTV: isTV,
+                                    isHighlighted: true,
+                                  ),
+                                  
+                                  _buildActionButton(
+                                    icon: Icons.app_registration,
+                                    title: 'Manual Registration',
+                                    onTap: () => Get.toNamed(screenRegister),
+                                    isTV: isTV,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 2.h),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            kIconSplash,
-                            width: .7.dp,
-                            height: .7.dp,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
-                      Text(
-                        'Device Activation',
-                        style: Get.textTheme.headlineMedium!.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Text(
-                        'Please visit our website and enter the following information to activate your device:',
-                        textAlign: TextAlign.center,
-                        style: Get.textTheme.bodyLarge!.copyWith(
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      if (isLoading)
-                        const CircularProgressIndicator()
-                      else
-                        Column(
-                          children: [
-                            _buildInfoCard(
-                              title: 'MAC Address',
-                              value: macAddress,
-                              onTap: () => _copyToClipboard(macAddress),
-                            ),
-                            const SizedBox(height: 20),
-                            _buildInfoCard(
-                              title: 'Device Key',
-                              value: deviceKey,
-                              onTap: () => _copyToClipboard(deviceKey),
-                            ),
-                          ],
-                        ),
-                      const SizedBox(height: 40),
-                      Text(
-                        'After activation on the website, return here and check your activation status.',
-                        textAlign: TextAlign.center,
-                        style: Get.textTheme.bodyMedium!.copyWith(
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      CardTallButton(
-                        label: "Open Activation Website",
-                        onTap: () async {
-                          final url =
-                              Uri.parse('${AppConfig.webBaseUrl}/activate');
-                          if (await canLaunchUrl(url)) {
-                            await launchUrl(url,
-                                mode: LaunchMode.externalApplication);
-                            debugPrint('Opening activation website');
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      CardTallButton(
-                        label: "Check Activation Status",
-                        onTap: () => _checkActivationAndUploadPlaylist(context),
-                      ),
-                      const SizedBox(height: 20),
-                      TextButton(
-                        onPressed: () {
-                          Get.toNamed(screenRegister);
-                        },
-                        child: Text(
-                          'Manual Registration',
-                          style: Get.textTheme.bodyMedium!.copyWith(
-                            color: kColorPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -412,14 +473,22 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
     required String title,
     required String value,
     required VoidCallback onTap,
+    required bool isTV,
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding: EdgeInsets.all(isTV ? 20 : 15),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: kColorPrimary.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.purpleAccent.withOpacity(0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,9 +497,10 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
             title,
             style: Get.textTheme.bodyMedium!.copyWith(
               color: Colors.white70,
+              fontSize: isTV ? 18 : 14,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -439,27 +509,97 @@ class _DeviceActivationScreenState extends State<DeviceActivationScreen> {
                   style: Get.textTheme.bodyLarge!.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: isTV ? 22 : 16,
                   ),
                 ),
               ),
               InkWell(
                 onTap: onTap,
+                borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: EdgeInsets.all(isTV ? 12 : 8),
                   decoration: BoxDecoration(
-                    color: kColorPrimary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(5),
+                    color: Colors.purpleAccent.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     FontAwesomeIcons.copy,
-                    color: kColorPrimary,
-                    size: 18,
+                    color: Colors.purpleAccent,
+                    size: isTV ? 24 : 18,
                   ),
                 ),
               ),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    required bool isTV,
+    bool isHighlighted = false,
+    bool isDisabled = false,
+  }) {
+    // Card sizes based on screen size
+    final double cardWidth = isTV ? 220.0 : 160.0;
+    final double cardHeight = isTV ? 120.0 : 100.0;
+    final double iconSize = isTV ? 40.0 : 30.0;
+    final double fontSize = isTV ? 16.0 : 14.0;
+    
+    return InkWell(
+      onTap: isDisabled ? null : onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: cardWidth,
+        height: cardHeight,
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(12),
+          border: isHighlighted 
+              ? Border.all(color: Colors.purpleAccent, width: 2) 
+              : null,
+          boxShadow: isHighlighted 
+              ? [BoxShadow(color: Colors.purpleAccent.withOpacity(0.3), blurRadius: 8, spreadRadius: 1)]
+              : null,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isHighlighted 
+                    ? Colors.purpleAccent.withOpacity(0.2) 
+                    : Colors.blueAccent.withOpacity(0.1),
+              ),
+              child: Icon(
+                icon,
+                size: iconSize,
+                color: isDisabled 
+                    ? Colors.grey 
+                    : (isHighlighted ? Colors.purpleAccent : Colors.blueAccent),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: isDisabled ? Colors.grey : Colors.white,
+                  fontSize: fontSize,
+                  fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

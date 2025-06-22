@@ -125,15 +125,17 @@ class _MovieChannelsState extends State<MovieChannels> {
                         final model =
                             keySearch.isEmpty ? channels[i] : searchList[i];
 
-                        return CardChannelMovieItem(
-                          title: model.name,
-                          image: model.streamIcon,
-                          onTap: () {
-                            Get.to(() => MovieContent(
-                                    channelMovie: model,
-                                    videoId: model.streamId ?? ''))!;
-
-                          },
+                        return ParentalControlWrapper(
+                          contentName: model.name ?? "",
+                          child: CardChannelMovieItem(
+                            title: model.name,
+                            image: model.streamIcon,
+                            onTap: () {
+                              Get.to(() => MovieContent(
+                                      channelMovie: model,
+                                      videoId: model.streamId ?? ''))!;
+                            },
+                          ),
                         );
                       },
                     );

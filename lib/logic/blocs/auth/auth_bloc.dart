@@ -8,8 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:player/repository/api/api.dart';
 // استيراد نموذج المستخدم
 import 'package:player/repository/models/user.dart';
-// استيراد خدمة Firebase المخصصة لحفظ البيانات
-import 'package:player/repository/services/firebase_service.dart';
+// Firebase service removed
 // استيراد خدمة التحقق من انتهاء الاشتراك
 import 'package:player/repository/services/expiration_service.dart';
 
@@ -21,8 +20,7 @@ part 'auth_state.dart';
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // تعريف متغير للوصول إلى واجهات API
   final AuthApi authApi;
-  // إنشاء كائن من خدمة Firebase لتخزين البيانات
-  final FirebaseService _firebaseService = FirebaseService();
+  // Firebase service removed
   // إنشاء كائن من خدمة التحقق من انتهاء الاشتراك
   final ExpirationService _expirationService = ExpirationService();
 
@@ -45,14 +43,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // إذا تم تسجيل المستخدم بنجاح
       if (user != null) {
-        // محاولة تخزين بيانات المستخدم في Firebase
-        try {
-          await _firebaseService.storeUserData(user);
-          print('تم إرسال بيانات المستخدم إلى Firebase بنجاح');
-        } catch (e) {
-          // في حالة حدوث خطأ أثناء التخزين، يُطبع الخطأ لكن لا يتم إيقاف العملية
-          print('فشل في تخزين بيانات المستخدم في Firebase: $e');
-        }
+        // Firebase storage removed - user data is only stored locally now
+        print('تم تسجيل المستخدم بنجاح - البيانات مخزنة محليًا فقط');
 
         // تغيير اتجاه الجهاز إلى الوضع الأفقي
         changeDeviceOrient();
@@ -76,16 +68,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       // إذا تم العثور على مستخدم
       if (localeUser != null) {
-        // محاولة تحديث وقت تسجيل الدخول الأخير في Firebase
-        try {
-          if (localeUser.userInfo?.username != null) {
-            await _firebaseService
-                .updateLastLogin(localeUser.userInfo!.username!);
-          }
-        } catch (e) {
-          // إذا فشلت العملية، لا تؤثر على باقي سير العمل
-          print('فشل تحديث وقت تسجيل الدخول في Firebase: $e');
-        }
+        // Firebase last login update removed
+        print('تم تسجيل الدخول بنجاح - البيانات مخزنة محليًا فقط');
 
         // التحقق من انتهاء الاشتراك وإظهار إشعار إذا لزم الأمر
         _expirationService.showExpirationNotification(localeUser);

@@ -3,11 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 
 import 'package:player/repository/api/api.dart';
-import 'package:player/repository/services/firebase_service.dart';
+// Firebase service removed
 import 'package:player/repository/services/expiration_service.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'helpers/helpers.dart';
@@ -26,25 +24,16 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
   await GetStorage.init("favorites");
-  
-  // Initialize Firebase with configuration
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    print('Firebase initialized successfully');
-  } catch (e) {
-    print('Failed to initialize Firebase: $e');
-  }
-  
+
+  // Firebase has been removed from the app
+
   // Create service instances
-  final firebaseService = FirebaseService();
   final expirationService = ExpirationService();
   final iptv = IpTvApi();
   final authApi = AuthApi();
   final watchingLocale = WatchingLocale();
   final favoriteLocale = FavoriteLocale();
-  
+
   // Check for subscription expiration on app startup
   try {
     final localeUser = await LocaleApi.getUser();
@@ -61,7 +50,7 @@ void main() async {
   runApp(MyApp(
     iptv: iptv,
     authApi: authApi,
-    firebaseService: firebaseService,
+    // firebaseService removed
     watchingLocale: watchingLocale,
     favoriteLocale: favoriteLocale,
   ));
@@ -70,14 +59,14 @@ void main() async {
 class MyApp extends StatefulWidget {
   final IpTvApi iptv;
   final AuthApi authApi;
-  final FirebaseService firebaseService;
+  // firebaseService removed
   final WatchingLocale watchingLocale;
   final FavoriteLocale favoriteLocale;
   const MyApp(
       {super.key,
       required this.iptv,
       required this.authApi,
-      required this.firebaseService,
+      // firebaseService removed
       required this.watchingLocale,
       required this.favoriteLocale});
 
@@ -147,11 +136,9 @@ class _MyAppState extends State<MyApp> {
                     name: screenLiveCategories,
                     page: () => const LiveCategoriesScreen()),
                 GetPage(
-                    name: screenRegister, page: () => const RegisterScreen()),
+                    name: screenRegister, page: () => const UnifiedRegisterScreen()),
                 GetPage(
-                    name: screenRegisterTv, page: () => const RegisterUserTv()),
-                GetPage(
-                    name: screenRegisterTv, page: () => const RegisterUserTv()),
+                    name: screenRegisterTv, page: () => const UnifiedRegisterScreen()),
                 GetPage(
                     name: screenMovieCategories,
                     page: () => const MovieCategoriesScreen()),
@@ -166,7 +153,8 @@ class _MyAppState extends State<MyApp> {
                 GetPage(
                     name: screenFavourite, page: () => const FavouriteScreen()),
                 GetPage(name: screenCatchUp, page: () => const CatchUpScreen()),
-                GetPage(name: screenUsersList, page: () => const UsersListScreen()),
+                GetPage(
+                    name: screenUsersList, page: () => const UsersListScreen()),
               ],
             );
           },

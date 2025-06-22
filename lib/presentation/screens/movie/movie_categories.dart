@@ -120,14 +120,18 @@ class _MovieCategoriesScreenState extends State<MovieCategoriesScreen> {
                         final model =
                             keySearch.isEmpty ? categories[i] : searchList[i];
 
-                        return CardLiveItem(
-                          title: model.categoryName ?? "",
-                          onTap: () {
-                            // OPEN Channels
-                            Get.to(() => MovieChannels(
-                                    catyId: model.categoryId ?? ''));
-                            // Ad-related code removed
-                          },
+                        return ParentalControlWrapper(
+                          contentName: model.categoryName ?? "",
+                          isCategory: true,
+                          child: CardLiveItem(
+                            title: model.categoryName ?? "",
+                            onTap: () {
+                              // OPEN Channels
+                              Get.to(() => MovieChannels(
+                                      catyId: model.categoryId ?? ''));
+                              // Ad-related code removed
+                            },
+                          ),
                         );
                       },
                     );

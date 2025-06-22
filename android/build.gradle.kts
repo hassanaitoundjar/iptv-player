@@ -1,3 +1,13 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Google services plugin removed
+    }
+}
+
 allprojects {
     repositories {
         google()

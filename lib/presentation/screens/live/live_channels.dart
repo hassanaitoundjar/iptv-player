@@ -238,40 +238,63 @@ class _ListChannelsScreen extends State<LiveChannelsScreen> {
                                                   final link =
                                                       "${userAuth.serverInfo!.serverUrl}/${userAuth.userInfo!.username}/${userAuth.userInfo!.password}/${model.streamId}";
 
-                                                  return CardLiveItem(
-                                                    title: model.name ?? "",
-                                                    image: model.streamIcon,
-                                                    link: link,
-                                                    isSelected: selectedVideo ==
-                                                            null
-                                                        ? false
-                                                        : selectedVideo == i,
-                                                    onTap: () async {
-                                                      try {
-                                                        if (selectedVideo ==
-                                                                i &&
-                                                            _videoPlayerController !=
-                                                                null) {
-                                                          // OPEN FULL SCREEN
-                                                          debugPrint(
-                                                              "///////////// OPEN FULL STREAM /////////////");
-                                                          context
-                                                              .read<
-                                                                  VideoCubit>()
-                                                              .changeUrlVideo(
-                                                                  true);
-                                                        } else {
-                                                          ///Play new Stream
-                                                          debugPrint(
-                                                              "Play new Stream");
+                                                  return ParentalControlWrapper(
+                                                      contentName:
+                                                          model.name ?? "",
+                                                      child: CardLiveItem(
+                                                        title: model.name ?? "",
+                                                        image: model.streamIcon,
+                                                        link: link,
+                                                        isSelected:
+                                                            selectedVideo ==
+                                                                    null
+                                                                ? false
+                                                                : selectedVideo ==
+                                                                    i,
+                                                        onTap: () async {
+                                                          try {
+                                                            if (selectedVideo ==
+                                                                    i &&
+                                                                _videoPlayerController !=
+                                                                    null) {
+                                                              // OPEN FULL SCREEN
+                                                              debugPrint(
+                                                                  "///////////// OPEN FULL STREAM /////////////");
+                                                              context
+                                                                  .read<
+                                                                      VideoCubit>()
+                                                                  .changeUrlVideo(
+                                                                      true);
+                                                            } else {
+                                                              ///Play new Stream
+                                                              debugPrint(
+                                                                  "Play new Stream");
 
-                                                          _initialVideo(model
-                                                              .streamId
-                                                              .toString());
+                                                              _initialVideo(model
+                                                                  .streamId
+                                                                  .toString());
 
-                                                          if (mounted) {
+                                                              if (mounted) {
+                                                                setState(() {
+                                                                  selectedVideo =
+                                                                      i;
+                                                                  channelLive =
+                                                                      model;
+                                                                  selectedStreamId =
+                                                                      model
+                                                                          .streamId;
+                                                                });
+                                                              }
+                                                            }
+                                                          } catch (e) {
+                                                            debugPrint(
+                                                                "error: $e");
+                                                            //  context.read<VideoCubit>().changeUrlVideo(false);
+
+                                                            // selectedVideo = null;
+                                                            _videoPlayerController =
+                                                                null;
                                                             setState(() {
-                                                              selectedVideo = i;
                                                               channelLive =
                                                                   model;
                                                               selectedStreamId =
@@ -279,22 +302,8 @@ class _ListChannelsScreen extends State<LiveChannelsScreen> {
                                                                       .streamId;
                                                             });
                                                           }
-                                                        }
-                                                      } catch (e) {
-                                                        debugPrint("error: $e");
-                                                        //  context.read<VideoCubit>().changeUrlVideo(false);
-
-                                                        // selectedVideo = null;
-                                                        _videoPlayerController =
-                                                            null;
-                                                        setState(() {
-                                                          channelLive = model;
-                                                          selectedStreamId =
-                                                              model.streamId;
-                                                        });
-                                                      }
-                                                    },
-                                                  );
+                                                        },
+                                                      ));
                                                 },
                                               );
                                             }
