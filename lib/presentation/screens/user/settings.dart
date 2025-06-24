@@ -11,9 +11,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _pinController = TextEditingController();
   final ParentalControlService _parentalControlService =
       ParentalControlService();
-  bool _isPinVisible = false;
   bool _isParentalControlEnabled = false;
   bool _isParentalPinSet = false;
+  bool _isPinVisible = false;
 
   @override
   void initState() {
@@ -22,14 +22,217 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadParentalControlSettings() async {
-    final isEnabled = await _parentalControlService.isEnabled();
-    final isPinSet = await _parentalControlService.isPinSet();
-
-    setState(() {
-      _isParentalControlEnabled = isEnabled;
-      _isParentalPinSet = isPinSet;
-    });
+    _isParentalControlEnabled = await _parentalControlService.isEnabled();
+    _isParentalPinSet = await _parentalControlService.isPinSet();
+    setState(() {});
   }
+
+  // Helper method to build settings card with icon and title
+  Widget _buildSettingsCard({
+    required String title,
+    required IconData icon,
+    required Function() onTap,
+    bool isFocused = false,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(15),
+      focusColor: kColorFocus,
+      autofocus: isFocused,
+      child: Ink(
+        decoration: BoxDecoration(
+          color: kColorCardLight,
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 30,
+              color: Colors.white,
+            ),
+            const SizedBox(height: 15),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Get.textTheme.titleMedium!.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Helper for detail row in dialog
+  Widget _detailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "$label: ",
+            style: Get.textTheme.bodyMedium!.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Get.textTheme.bodyMedium!.copyWith(color: Colors.white70),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Show parental control dialog
+  void _showParentalControlDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          backgroundColor: kColorCardDark,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                FontAwesomeIcons.shieldAlt,
+                color: kColorPrimary,
+                size: 24,
+              ),
+              SizedBox(width: 10),
+              Text(
+                "Parental Controls",
+                style: Get.textTheme.titleLarge!.copyWith(color: Colors.white),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enable or disable parental controls to restrict access to adult content.',
+                style: Get.textTheme.bodyMedium!.copyWith(
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 20),
+              // Enable/Disable Parental Control
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Enable Parental Control",
+                    style:
+                        Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
+                  ),
+                  Switch(
+                    value: _isParentalControlEnabled,
+                    onChanged: (value) async {
+                      if (value && !_isParentalPinSet) {
+                        // Show PIN setup dialog if enabling and PIN not set
+                        final pinSet = await _parentalControlService
+                            .showPinSetupDialog(context);
+                        if (pinSet) {
+                          setState(() {
+                            _isParentalControlEnabled = true;
+                            _isParentalPinSet = true;
+                          });
+                          // Also update the parent state
+                          this.setState(() {
+                            _isParentalControlEnabled = true;
+                            _isParentalPinSet = true;
+                          });
+                        }
+                      } else {
+                        await _parentalControlService.setEnabled(value);
+                        setState(() {
+                          _isParentalControlEnabled = value;
+                        });
+                        // Also update the parent state
+                        this.setState(() {
+                          _isParentalControlEnabled = value;
+                        });
+                      }
+                    },
+                    activeColor: kColorPrimary,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Change PIN section
+              if (_isParentalPinSet)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Change Parental PIN',
+                      style: Get.textTheme.bodyMedium!.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        _showChangeParentalPinDialog();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kColorPrimary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        minimumSize: Size(double.infinity, 45),
+                      ),
+                      child: Text(
+                        "Change Parental PIN",
+                        style: Get.textTheme.bodyMedium!
+                            .copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                "CANCEL",
+                style: Get.textTheme.bodyMedium!.copyWith(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Get.back(),
+              child: Text(
+                "SAVE",
+                style: Get.textTheme.bodyMedium!.copyWith(
+                  color: kColorPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // This method was removed as it was a duplicate of the existing _showChangeParentalPinDialog method
 
   @override
   void dispose() {
@@ -53,266 +256,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const AppBarSettings(),
-                  SizedBox(height: 5.h),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: kColorCardLight,
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 20,
-                                    horizontal: 20,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        dateNowWelcome(),
-                                        style: Get.textTheme.titleSmall,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      if (userInfo.userInfo!.expDate != null)
-                                        Text(
-                                          "Expiration: ${expirationDate(userInfo.userInfo!.expDate)}",
-                                          style: Get.textTheme.titleSmall!
-                                              .copyWith(
-                                            color: kColorHint,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Expanded(
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: kColorCardLight,
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 20,
-                                    horizontal: 20,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "name: ${userInfo.userInfo!.username}",
-                                        style: Get.textTheme.titleSmall,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        "password: ${userInfo.userInfo!.password}",
-                                        style: Get.textTheme.titleSmall,
-                                      ),
-                                      const SizedBox(height: 5),
-                                      if (userInfo.serverInfo != null)
-                                        Text(
-                                          "Url: ${userInfo.serverInfo!.serverUrl}",
-                                          style: Get.textTheme.titleSmall,
-                                        ),
-                                      const SizedBox(height: 5),
-                                      Text(
-                                        "Playlist: ${userInfo.userInfo!.playlistName ?? userInfo.userInfo!.username}",
-                                        style: Get.textTheme.titleSmall,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 30.w,
-                                child: CardButtonWatchMovie(
-                                  isFocused: true,
-                                  title: "Refresh all data",
-                                  onTap: () {
-                                    context
-                                        .read<LiveCatyBloc>()
-                                        .add(GetLiveCategories());
-                                    context
-                                        .read<MovieCatyBloc>()
-                                        .add(GetMovieCategories());
-                                    context
-                                        .read<SeriesCatyBloc>()
-                                        .add(GetSeriesCategories());
-                                    Get.back();
-                                  },
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              SizedBox(
-                                width: 30.w,
-                                child: CardButtonWatchMovie(
-                                  title: "Add New User",
-                                  onTap: () {
-                                    context.read<AuthBloc>().add(AuthLogOut());
-                                    Get.offAllNamed("/");
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              SizedBox(
-                                width: 30.w,
-                                child: CardButtonWatchMovie(
-                                  title: "Set Playlist PIN",
-                                  onTap: () {
-                                    _showPinDialog(context, userInfo);
-                                  },
-                                ),
-                              ),
-                              SizedBox(height: 2.h),
-                              // Parental Control Section
-                              Container(
-                                width: 30.w,
-                                decoration: BoxDecoration(
-                                  color: kColorCardDark,
-                                  borderRadius: BorderRadius.circular(5),
-                                ),
-                                padding: const EdgeInsets.all(15),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Parental Controls",
-                                      style:
-                                          Get.textTheme.titleMedium!.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 15),
-                                    // Enable/Disable Parental Control
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          "Enable Parental Control",
-                                          style: Get.textTheme.bodyMedium!
-                                              .copyWith(
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                        Switch(
-                                          value: _isParentalControlEnabled,
-                                          onChanged: (value) async {
-                                            if (value && !_isParentalPinSet) {
-                                              // Show PIN setup dialog if enabling and PIN not set
-                                              final pinSet =
-                                                  await _parentalControlService
-                                                      .showPinSetupDialog(
-                                                          context);
-                                              if (pinSet) {
-                                                setState(() {
-                                                  _isParentalControlEnabled =
-                                                      true;
-                                                  _isParentalPinSet = true;
-                                                });
-                                              }
-                                            } else {
-                                              await _parentalControlService
-                                                  .setEnabled(value);
-                                              setState(() {
-                                                _isParentalControlEnabled =
-                                                    value;
-                                              });
-                                            }
-                                          },
-                                          activeColor: kColorPrimary,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 15),
-                                    // Change PIN Button
-                                    if (_isParentalPinSet)
-                                      InkWell(
-                                        onTap: () =>
-                                            _showChangeParentalPinDialog(),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 10, horizontal: 15),
-                                          decoration: BoxDecoration(
-                                            color: kColorCardLight,
-                                            borderRadius:
-                                                BorderRadius.circular(5),
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                "Change Parental PIN",
-                                                style: Get.textTheme.bodyMedium!
-                                                    .copyWith(
-                                                  color: Colors.white,
-                                                ),
-                                              ),
-                                              const Icon(
-                                                Icons.arrow_forward_ios,
-                                                color: kColorPrimary,
-                                                size: 16,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    const SizedBox(height: 15),
-                                    // Note: Temporary unlock duration section removed
-                                    // We now require PIN verification every time for adult content
-                                  ],
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              SizedBox(
-                                width: 30.w,
-                                child: CardButtonWatchMovie(
-                                  title: "user-list",
-                                  onTap: () {
-                                    Get.toNamed(screenUsersList);
-                                  },
-                                ),
-                              ),
-                              SizedBox(height: 5.h),
-                              SizedBox(
-                                width: 30.w,
-                                child: CardButtonWatchMovie(
-                                  title: "LogOut",
-                                  onTap: () {
-                                    context.read<AuthBloc>().add(AuthLogOut());
-                                    Get.offAllNamed(screenIntro);
+                  // App Bar with title and date
+                  Row(
+                    children: [
+                      const AppBarSettings(),
+                      const Spacer(),
+                      Text(
+                        dateNowWelcome(),
+                        style: Get.textTheme.titleSmall!
+                            .copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(width: 20),
+                    ],
+                  ),
 
-                                    Get.reload();
-                                  },
-                                ),
-                              ),
-                            ],
+                  // Settings cards grid
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Determine number of cards per row based on screen width
+                        final double screenWidth = constraints.maxWidth;
+                        final int cardsPerRow =
+                            screenWidth > 600 ? 4 : (screenWidth > 400 ? 3 : 2);
+
+                        return GridView(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: cardsPerRow,
+                            childAspectRatio: 1.0,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
                           ),
-                        ),
-                      ],
+                          children: [
+                            // General Settings Card
+                            _buildSettingsCard(
+                              title: "General Settings",
+                              icon: FontAwesomeIcons.cog,
+                              onTap: () {
+                                Get.toNamed(screenUserInfo);
+                              },
+                            ),
+
+                            // Refresh Data Card
+                            _buildSettingsCard(
+                              title: "Refresh Data",
+                              icon: FontAwesomeIcons.sync,
+                              onTap: () {
+                                context
+                                    .read<LiveCatyBloc>()
+                                    .add(GetLiveCategories());
+                                context
+                                    .read<MovieCatyBloc>()
+                                    .add(GetMovieCategories());
+                                context
+                                    .read<SeriesCatyBloc>()
+                                    .add(GetSeriesCategories());
+                                Get.back(); // Return to welcome screen after refreshing data
+                              },
+                            ),
+
+                            // Parental Control Card
+                            _buildSettingsCard(
+                              title: "Parental Control",
+                              icon: FontAwesomeIcons.shieldAlt,
+                              onTap: () {
+                                _showParentalControlDialog(context);
+                              },
+                            ),
+
+                            // PIN Protection Card
+                            _buildSettingsCard(
+                              title: "Playlist PIN",
+                              icon: FontAwesomeIcons.lock,
+                              onTap: () {
+                                _showPinDialog(context, userInfo);
+                              },
+                            ),
+
+                            // User List Card
+                            _buildSettingsCard(
+                              title: "User List",
+                              icon: FontAwesomeIcons.users,
+                              onTap: () {
+                                Get.toNamed(screenUsersList);
+                              },
+                            ),
+
+                            // Downloaded Movies Card
+                            _buildSettingsCard(
+                              title: "Downloaded Movies",
+                              icon: FontAwesomeIcons.download,
+                              onTap: () {
+                                Get.toNamed(screenDownloadedMovies);
+                              },
+                            ),
+
+                            // Add New User Card
+                            _buildSettingsCard(
+                              title: "Add New User",
+                              icon: FontAwesomeIcons.userPlus,
+                              onTap: () {
+                                context.read<AuthBloc>().add(AuthLogOut());
+                                Get.offAllNamed("/");
+                              },
+                            ),
+
+                            // Logout Card
+                            _buildSettingsCard(
+                              title: "Logout",
+                              icon: FontAwesomeIcons.signOutAlt,
+                              onTap: () {
+                                context.read<AuthBloc>().add(AuthLogOut());
+                                Get.offAllNamed(screenIntro);
+                                Get.reload();
+                              },
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
+
+                  // Footer
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -495,7 +560,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     Get.dialog(
       Dialog(
-        backgroundColor: Colors.grey[900],
+        backgroundColor: kColorCardLight,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(15),
         ),
@@ -505,19 +570,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.security,
-                    color: Colors.amber,
-                    size: 50,
-                  ),
-                  const SizedBox(height: 20),
+                  // Title
                   Text(
                     'Change Parental Control PIN',
-                    style: TextStyle(
+                    style: Get.textTheme.titleMedium!.copyWith(
                       color: Colors.white,
-                      fontSize: 18,
                       fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  // Description
+                  Text(
+                    'Update your parental control PIN to protect restricted content.',
+                    style: Get.textTheme.bodyMedium!.copyWith(
+                      color: Colors.white70,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -527,27 +595,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 4,
                     obscureText: !oldPinVisible,
-                    style: TextStyle(color: Colors.white),
+                    style:
+                        Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
                     decoration: InputDecoration(
                       counterText: '',
-                      labelText: 'Current PIN',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      hintText: '• • • •',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(10),
+                      hintText: 'Current PIN',
+                      hintStyle: Get.textTheme.bodyMedium!.copyWith(
+                        color: Colors.grey,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.amber),
-                        borderRadius: BorderRadius.circular(10),
+                      counterStyle: Get.textTheme.bodySmall!.copyWith(
+                        color: Colors.white70,
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           oldPinVisible
                               ? Icons.visibility_off
                               : Icons.visibility,
-                          color: Colors.grey,
+                          size: 18,
+                          color: kColorPrimary,
                         ),
                         onPressed: () {
                           setState(() {
@@ -564,27 +629,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 4,
                     obscureText: !newPinVisible,
-                    style: TextStyle(color: Colors.white),
+                    style:
+                        Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
                     decoration: InputDecoration(
                       counterText: '',
-                      labelText: 'New PIN',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      hintText: '• • • •',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(10),
+                      hintText: 'New PIN',
+                      hintStyle: Get.textTheme.bodyMedium!.copyWith(
+                        color: Colors.grey,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.amber),
-                        borderRadius: BorderRadius.circular(10),
+                      counterStyle: Get.textTheme.bodySmall!.copyWith(
+                        color: Colors.white70,
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
                           newPinVisible
                               ? Icons.visibility_off
                               : Icons.visibility,
-                          color: Colors.grey,
+                          size: 18,
+                          color: kColorPrimary,
                         ),
                         onPressed: () {
                           setState(() {
@@ -601,45 +663,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     keyboardType: TextInputType.number,
                     maxLength: 4,
                     obscureText: !newPinVisible,
-                    style: TextStyle(color: Colors.white),
+                    style:
+                        Get.textTheme.bodyMedium!.copyWith(color: Colors.white),
                     decoration: InputDecoration(
                       counterText: '',
-                      labelText: 'Confirm New PIN',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      hintText: '• • • •',
-                      hintStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(10),
+                      hintText: 'Confirm New PIN',
+                      hintStyle: Get.textTheme.bodyMedium!.copyWith(
+                        color: Colors.grey,
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.amber),
-                        borderRadius: BorderRadius.circular(10),
+                      counterStyle: Get.textTheme.bodySmall!.copyWith(
+                        color: Colors.white70,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 20),
+                  // Action buttons
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
                         onPressed: () {
                           Get.back();
                         },
                         child: Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                      ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.amber,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          'CANCEL',
+                          style: Get.textTheme.bodyMedium!.copyWith(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
+                      ),
+                      TextButton(
                         onPressed: () async {
                           // Validate inputs
                           if (oldPinController.text.length != 4 ||
@@ -692,8 +746,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           }
                         },
                         child: Text(
-                          'Change PIN',
-                          style: TextStyle(color: Colors.black),
+                          'SAVE',
+                          style: Get.textTheme.bodyMedium!.copyWith(
+                            color: kColorPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],

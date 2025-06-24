@@ -136,9 +136,11 @@ class _MyAppState extends State<MyApp> {
                     name: screenLiveCategories,
                     page: () => const LiveCategoriesScreen()),
                 GetPage(
-                    name: screenRegister, page: () => const UnifiedRegisterScreen()),
+                    name: screenRegister,
+                    page: () => const UnifiedRegisterScreen()),
                 GetPage(
-                    name: screenRegisterTv, page: () => const UnifiedRegisterScreen()),
+                    name: screenRegisterTv,
+                    page: () => const UnifiedRegisterScreen()),
                 GetPage(
                     name: screenMovieCategories,
                     page: () => const MovieCategoriesScreen()),
@@ -154,7 +156,11 @@ class _MyAppState extends State<MyApp> {
                     name: screenFavourite, page: () => const FavouriteScreen()),
                 GetPage(name: screenCatchUp, page: () => const CatchUpScreen()),
                 GetPage(
+                    name: screenUserInfo, page: () => const UserInfoScreen()),
+                GetPage(
                     name: screenUsersList, page: () => const UsersListScreen()),
+                GetPage(
+                    name: screenDownloadedMovies, page: () => const DownloadedMoviesScreen()),
               ],
             );
           },

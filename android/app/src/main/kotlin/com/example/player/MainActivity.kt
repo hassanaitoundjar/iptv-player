@@ -1,4 +1,4 @@
-package com.example.player
+package com.betterplayer.player
 
 import io.flutter.embedding.android.FlutterActivity
 

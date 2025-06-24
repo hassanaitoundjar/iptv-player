@@ -3,9 +3,8 @@ part of '../screens.dart';
 
 // تعريف واجهة الشاشة LiveChannelsScreen كودجت ذات حالة (Stateful)
 class LiveChannelsScreen extends StatefulWidget {
-  const LiveChannelsScreen({super.key, required this.catyId, this.initialChannelId});
+  const LiveChannelsScreen({super.key, required this.catyId});
   final String catyId; // معرّف الفئة المستخدمة لعرض القنوات الحية
-  final String? initialChannelId; // معرّف القناة المبدئية للتشغيل (اختياري)
 
   @override
   State<LiveChannelsScreen> createState() => _ListChannelsScreen();
@@ -69,26 +68,12 @@ class _ListChannelsScreen extends State<LiveChannelsScreen> {
 
   @override
   void initState() {
-    super.initState();
-    
     // عند بدء الشاشة، نطلب القنوات الحية من Bloc باستخدام معرف الفئة
     context.read<ChannelsBloc>().add(GetLiveChannelsEvent(
           catyId: widget.catyId,
           typeCategory: TypeCategory.live,
         ));
-    
-    // إذا تم توفير معرف قناة مبدئية، قم بتشغيلها تلقائياً
-    if (widget.initialChannelId != null) {
-      // تأخير بسيط للتأكد من تحميل القنوات أولاً
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _initialVideo(widget.initialChannelId!);
-        // تحديث الحالة للقناة المحددة
-        setState(() {
-          selectedStreamId = widget.initialChannelId;
-          // سيتم تحديث selectedVideo و channelLive عندما يتم تحميل القنوات
-        });
-      });
-    }
+    super.initState();
   }
 
   @override

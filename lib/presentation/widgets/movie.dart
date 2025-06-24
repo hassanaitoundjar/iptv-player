@@ -68,6 +68,7 @@ class CardButtonWatchMovie extends StatefulWidget {
     this.isSelected = false,
     this.index,
     this.onFocusChanged,
+    this.icon,
   });
   final String title;
   final Function() onTap;
@@ -76,6 +77,7 @@ class CardButtonWatchMovie extends StatefulWidget {
   final bool isSelected;
   final int? index;
   final Function(int?)? onFocusChanged;
+  final IconData? icon;
 
   @override
   State<CardButtonWatchMovie> createState() => _CardButtonWatchMovieState();
@@ -120,12 +122,30 @@ class _CardButtonWatchMovieState extends State<CardButtonWatchMovie> {
             vertical: 8,
           ),
           child: Center(
-            child: Text(
-              widget.title.toUpperCase(),
-              style: isFocused
-                  ? Get.textTheme.headlineMedium
-                  : Get.textTheme.headlineSmall,
-            ),
+            child: widget.icon != null
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      widget.icon,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.title.toUpperCase(),
+                      style: isFocused
+                          ? Get.textTheme.headlineMedium
+                          : Get.textTheme.headlineSmall,
+                    ),
+                  ],
+                )
+              : Text(
+                  widget.title.toUpperCase(),
+                  style: isFocused
+                      ? Get.textTheme.headlineMedium
+                      : Get.textTheme.headlineSmall,
+                ),
           ),
         ),
       ),

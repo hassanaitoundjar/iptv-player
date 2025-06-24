@@ -8,7 +8,7 @@
 <uses-feature android:name="android.hardware.screen.landscape" android:required="false"/>
 <uses-feature android:name="android.software.leanback" android:required="false"/>
     <application
-        android:label="player"
+        android:label="Better Player"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

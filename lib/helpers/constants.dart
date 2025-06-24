@@ -1,6 +1,6 @@
 part of 'helpers.dart';
 
-const String kAppName = "AZUL IPTV";
+const String kAppName = "PloPlayer";
 
 //TODO: SHow Ads ( true / false )
 const bool showAds = false;
@@ -11,8 +11,8 @@ const String kIconMovies = "assets/images/film-reel.png";
 const String kIconSplash = "assets/images/icon.png";
 const String kImageIntro = "assets/images/intro h.jpeg";
 
-const String kPrivacy = "https://www.whmcssmarters.com/terms-of-service/";
-const String kContact = "https://mouadzizi.me";
+const String kPrivacy = "";
+const String kContact = "";
 
 const double sizeTablet = 950;
 

@@ -195,24 +195,73 @@ class _StreamPlayerPageState extends State<StreamPlayerPage> {
                                 ),
                               ],
                             ),
-                            IconButton(
-                              focusColor: kColorFocus,
-                              onPressed: () {
-                                if (isPlayed) {
-                                  widget.controller!.pause();
-                                  isPlayed = false;
-                                } else {
-                                  widget.controller!.play();
-                                  isPlayed = true;
-                                }
-                                setState(() {});
-                              },
-                              icon: Icon(
-                                isPlayed
-                                    ? FontAwesomeIcons.pause
-                                    : FontAwesomeIcons.play,
-                                size: 24.sp,
-                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Skip backward 10 seconds button
+                                if (!widget.isLive) // Only show for non-live content
+                                  IconButton(
+                                    focusColor: kColorFocus,
+                                    onPressed: () {
+                                      if (widget.controller != null) {
+                                        // Get current position
+                                        final currentPos = widget.controller!.value.position.inMilliseconds;
+                                        // Calculate new position (10 seconds back)
+                                        final newPos = max(currentPos - 10000, 0);
+                                        // Seek to new position
+                                        widget.controller!.seekTo(Duration(milliseconds: newPos));
+                                      }
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.backward,
+                                      size: 20.sp,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                
+                                // Play/Pause button
+                                IconButton(
+                                  focusColor: kColorFocus,
+                                  onPressed: () {
+                                    if (isPlayed) {
+                                      widget.controller!.pause();
+                                      isPlayed = false;
+                                    } else {
+                                      widget.controller!.play();
+                                      isPlayed = true;
+                                    }
+                                    setState(() {});
+                                  },
+                                  icon: Icon(
+                                    isPlayed
+                                        ? FontAwesomeIcons.pause
+                                        : FontAwesomeIcons.play,
+                                    size: 24.sp,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                
+                                // Skip forward 10 seconds button
+                                if (!widget.isLive) // Only show for non-live content
+                                  IconButton(
+                                    focusColor: kColorFocus,
+                                    onPressed: () {
+                                      if (widget.controller != null) {
+                                        // Get current position
+                                        final currentPos = widget.controller!.value.position.inMilliseconds;
+                                        // Calculate new position (10 seconds forward)
+                                        final newPos = currentPos + 10000;
+                                        // Seek to new position
+                                        widget.controller!.seekTo(Duration(milliseconds: newPos));
+                                      }
+                                    },
+                                    icon: Icon(
+                                      FontAwesomeIcons.forward,
+                                      size: 20.sp,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                              ],
                             ),
                             const SizedBox(height: 30),
                           ],

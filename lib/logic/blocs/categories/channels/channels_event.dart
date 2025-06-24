@@ -13,7 +13,3 @@ class GetLiveChannelsEvent extends ChannelsEvent {
   // المُنشئ الذي يستقبل النوع ومعرّف الفئة المطلوبة
   GetLiveChannelsEvent({required this.typeCategory, required this.catyId});
 }
-
-// حدث مخصص لطلب جلب جميع القنوات المباشرة للبحث العام
-class GetAllLiveChannelsEvent extends ChannelsEvent {}
-

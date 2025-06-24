@@ -80,45 +80,6 @@ class IpTvApi {
       return [];
     }
   }
-  
-  /// Get All Live Channels for Global Search
-  Future<List<ChannelLive>> getAllLiveChannels() async {
-    try {
-      final user = await LocaleApi.getUser();
-
-      if (user == null) {
-        debugPrint("User is Null");
-        return [];
-      }
-
-      var url = "${user.serverInfo!.serverUrl}/player_api.php";
-
-      Response<List<dynamic>> response = await _dio.get(
-        url,
-        queryParameters: {
-          "password": user.userInfo!.password,
-          "username": user.userInfo!.username,
-          "action": "get_live_streams",
-        },
-      );
-      debugPrint("URL Global Search: ${response.realUri}");
-
-      if (response.statusCode == 200) {
-        final json = response.data ?? [];
-
-        debugPrint("Global Search SIZE: ${json.length}");
-
-        final list = json.map((e) => ChannelLive.fromJson(e)).toList();
-
-        return list;
-      }
-
-      return [];
-    } catch (e) {
-      log("Error Global Channel Search: $e");
-      return [];
-    }
-  }
 
   /// Channels Movie
   Future<List<ChannelMovie>> getMovieChannels(String catyId) async {

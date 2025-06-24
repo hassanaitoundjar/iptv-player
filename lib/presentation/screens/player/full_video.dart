@@ -6,10 +6,12 @@ class FullVideoScreen extends StatefulWidget {
     required this.link,
     required this.title,
     this.isLive = false,
+    this.isLocalFile = false,
   });
   final String link;
   final String title;
   final bool isLive;
+  final bool isLocalFile;
 
   @override
   State<FullVideoScreen> createState() => _FullVideoScreenState();
@@ -59,27 +61,48 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
   @override
   void initState() {
     Wakelock.enable();
-    _videoPlayerController = VlcPlayerController.network(
-      widget.link,
-      hwAcc: HwAcc.auto, // Changed from full to auto for better compatibility
-      autoPlay: true,
-      autoInitialize: true,
-      options: VlcPlayerOptions(
-        video: VlcVideoOptions([
-          VlcVideoOptions.dropLateFrames(true),
-          VlcVideoOptions.skipFrames(true),
-          '--no-mediacodec-dr', // Disable direct rendering
-          '--network-caching=1500', // Increase network buffer
-          '--clock-jitter=0', // Reduce clock jitter
-          '--clock-synchro=0', // Disable clock synchro for smoother playback
-        ]),
-        advanced: VlcAdvancedOptions([
-          VlcAdvancedOptions.networkCaching(1500),
-          '--stats', // Enable statistics
-          '--adaptive-maxbuffer=1500', // Adjust buffer size
-        ]),
-      ),
-    );
+    
+    // Initialize controller based on whether the file is local or from network
+    if (widget.isLocalFile) {
+      _videoPlayerController = VlcPlayerController.file(
+        File(widget.link),
+        hwAcc: HwAcc.auto,
+        autoPlay: true,
+        autoInitialize: true,
+        options: VlcPlayerOptions(
+          video: VlcVideoOptions([
+            VlcVideoOptions.dropLateFrames(true),
+            VlcVideoOptions.skipFrames(true),
+          ]),
+          advanced: VlcAdvancedOptions([
+            VlcAdvancedOptions.networkCaching(1500),
+            '--stats', // Enable statistics
+          ]),
+        ),
+      );
+    } else {
+      _videoPlayerController = VlcPlayerController.network(
+        widget.link,
+        hwAcc: HwAcc.auto, // Changed from full to auto for better compatibility
+        autoPlay: true,
+        autoInitialize: true,
+        options: VlcPlayerOptions(
+          video: VlcVideoOptions([
+            VlcVideoOptions.dropLateFrames(true),
+            VlcVideoOptions.skipFrames(true),
+            '--no-mediacodec-dr', // Disable direct rendering
+            '--network-caching=1500', // Increase network buffer
+            '--clock-jitter=0', // Reduce clock jitter
+            '--clock-synchro=0', // Disable clock synchro for smoother playback
+          ]),
+          advanced: VlcAdvancedOptions([
+            VlcAdvancedOptions.networkCaching(1500),
+            '--stats', // Enable statistics
+            '--adaptive-maxbuffer=1500', // Adjust buffer size
+          ]),
+        ),
+      );
+    }
 
     super.initState();
     _videoPlayerController.addListener(listener);
@@ -372,22 +395,69 @@ class _FullVideoScreenState extends State<FullVideoScreen> {
                     ),
                   ),
                 Center(
-                  child: IconButton(
-                    onPressed: () {
-                      setState(() {
-                        if (isPlayed) {
-                          _videoPlayerController.pause();
-                          isPlayed = false;
-                        } else {
-                          _videoPlayerController.play();
-                          isPlayed = true;
-                        }
-                      });
-                    },
-                    icon: Icon(
-                      isPlayed ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
-                      size: 24.sp,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Skip backward 10 seconds button
+                      if (!widget.isLive) // Only show for non-live content
+                        IconButton(
+                          focusColor: kColorFocus,
+                          onPressed: () {
+                            // Get current position
+                            final currentPos = _videoPlayerController.value.position.inMilliseconds;
+                            // Calculate new position (10 seconds back)
+                            final newPos = max(currentPos - 10000, 0);
+                            // Seek to new position
+                            _videoPlayerController.seekTo(Duration(milliseconds: newPos));
+                          },
+                          icon: Icon(
+                            FontAwesomeIcons.backward,
+                            size: 20.sp,
+                            color: Colors.white,
+                          ),
+                          tooltip: 'Back 10s',
+                        ),
+                      
+                      // Play/Pause button
+                      IconButton(
+                        onPressed: () {
+                          setState(() {
+                            if (isPlayed) {
+                              _videoPlayerController.pause();
+                              isPlayed = false;
+                            } else {
+                              _videoPlayerController.play();
+                              isPlayed = true;
+                            }
+                          });
+                        },
+                        icon: Icon(
+                          isPlayed ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
+                          size: 24.sp,
+                          color: Colors.white,
+                        ),
+                      ),
+                      
+                      // Skip forward 10 seconds button
+                      if (!widget.isLive) // Only show for non-live content
+                        IconButton(
+                          focusColor: kColorFocus,
+                          onPressed: () {
+                            // Get current position
+                            final currentPos = _videoPlayerController.value.position.inMilliseconds;
+                            // Calculate new position (10 seconds forward)
+                            final newPos = currentPos + 10000;
+                            // Seek to new position
+                            _videoPlayerController.seekTo(Duration(milliseconds: newPos));
+                          },
+                          icon: Icon(
+                            FontAwesomeIcons.forward,
+                            size: 20.sp,
+                            color: Colors.white,
+                          ),
+                          tooltip: 'Forward 10s',
+                        ),
+                    ],
                   ),
                 ),
                 if (!isTv(context))
