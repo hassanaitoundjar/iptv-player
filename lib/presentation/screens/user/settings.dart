@@ -342,15 +342,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               },
                             ),
 
-                            // Downloaded Movies Card
-                            _buildSettingsCard(
-                              title: "Downloaded Movies",
-                              icon: FontAwesomeIcons.download,
-                              onTap: () {
-                                Get.toNamed(screenDownloadedMovies);
-                              },
-                            ),
-
                             // Add New User Card
                             _buildSettingsCard(
                               title: "Add New User",

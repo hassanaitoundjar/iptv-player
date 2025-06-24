@@ -43,7 +43,7 @@ dependencies:
 
 
   #Http
-  dio: ^5.6.0
+  dio: ^5.8.0+1
   http: ^1.2.0
   shared_preferences: ^2.2.2
   

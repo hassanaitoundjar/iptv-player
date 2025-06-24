@@ -5,8 +5,8 @@ const Color kColorPrimaryDark = Color(0xFF9E47FF);
 
 const Color kColorFocus = Color(0xFFBE7DFB);
 
-const Color kColorBack = Color(0xFF262435);
-const Color kColorBackDark = Color(0xFF1e182c);
+const Color kColorBack = Color.fromARGB(255, 85, 83, 104);
+const Color kColorBackDark = Color.fromARGB(255, 66, 64, 82);
 
 const Color kColorCardLight = Color(0xFF2D2A3B);
 const Color kColorCardDark = Color(0xFF4C4958);

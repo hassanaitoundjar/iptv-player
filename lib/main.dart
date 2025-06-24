@@ -159,8 +159,6 @@ class _MyAppState extends State<MyApp> {
                     name: screenUserInfo, page: () => const UserInfoScreen()),
                 GetPage(
                     name: screenUsersList, page: () => const UsersListScreen()),
-                GetPage(
-                    name: screenDownloadedMovies, page: () => const DownloadedMoviesScreen()),
               ],
             );
           },

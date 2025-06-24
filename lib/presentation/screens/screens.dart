@@ -50,7 +50,6 @@ import '../widgets/widgets.dart';
 import '../widgets/parental_control_wrapper.dart';
 import '../../config/app_config.dart';
 import 'package:player/services/update_timestamp_service.dart';
-import '../../services/download_service.dart';
 
 part 'live/live_categories.dart';
 part 'live/live_channels.dart';
@@ -76,4 +75,3 @@ part 'welcome.dart';
 part 'user/catch_up.dart';
 part 'user/device_activation.dart';
 part 'user/user_info.dart';
-part 'movie/downloaded_movies.dart';

@@ -17,4 +17,3 @@ const String screenMovieCategories = "/categories-movie";
 const String screenSeriesCategories = "/categories-series";
 const String screenDeviceActivation = "/device-activation";
 const String screenUserInfo = "/user_info";
-const String screenDownloadedMovies = "/downloaded-movies";

@@ -13,6 +13,19 @@ class MovieContent extends StatefulWidget {
 class _MovieContentState extends State<MovieContent> {
   late Future<MovieDetail?> future;
 
+  // Set to track active downloads
+  final Set<String> _activeDownloads = {};
+
+  // Register a download to track it
+  void registerDownload(String movieId) {
+    _activeDownloads.add(movieId);
+  }
+
+  // Unregister a download when it completes or is manually canceled
+  void unregisterDownload(String movieId) {
+    _activeDownloads.remove(movieId);
+  }
+
   @override
   void initState() {
     future = IpTvApi.getMovieDetails(widget.videoId);
@@ -150,196 +163,6 @@ class _MovieContentState extends State<MovieContent> {
                                                                   ""));
                                                 },
                                               ),
-                                            SizedBox(width: 3.w),
-                                            // Download button
-                                            FutureBuilder<bool>(
-                                              future: DownloadService
-                                                  .isMovieDownloaded(movie
-                                                      .movieData!.streamId
-                                                      .toString()),
-                                              builder: (context, snapshot) {
-                                                final bool isDownloaded =
-                                                    snapshot.data ?? false;
-                                                return CardButtonWatchMovie(
-                                                  title: isDownloaded
-                                                      ? "Downloaded"
-                                                      : "Download",
-                                                  icon: isDownloaded
-                                                      ? FontAwesomeIcons
-                                                          .circleCheck
-                                                      : FontAwesomeIcons
-                                                          .download,
-                                                  onTap: () async {
-                                                    if (isDownloaded) {
-                                                      // Show options dialog for downloaded movie
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (context) =>
-                                                            AlertDialog(
-                                                          title: const Text(
-                                                              "Downloaded Movie"),
-                                                          content: const Text(
-                                                              "This movie is already downloaded. What would you like to do?"),
-                                                          actions: [
-                                                            TextButton(
-                                                              child: const Text(
-                                                                  "Play Offline"),
-                                                              onPressed:
-                                                                  () async {
-                                                                Navigator.pop(
-                                                                    context);
-                                                                final downloadedMovie =
-                                                                    await DownloadService.getDownloadedMovie(movie
-                                                                        .movieData!
-                                                                        .streamId
-                                                                        .toString());
-                                                                if (downloadedMovie !=
-                                                                    null) {
-                                                                  Get.to(() =>
-                                                                      FullVideoScreen(
-                                                                        link: downloadedMovie
-                                                                            .filePath,
-                                                                        title: downloadedMovie
-                                                                            .title,
-                                                                        isLive:
-                                                                            false,
-                                                                      ));
-                                                                }
-                                                              },
-                                                            ),
-                                                            TextButton(
-                                                              child: const Text(
-                                                                  "Delete"),
-                                                              onPressed:
-                                                                  () async {
-                                                                Navigator.pop(
-                                                                    context);
-                                                                await DownloadService
-                                                                    .removeDownloadedMovie(movie
-                                                                        .movieData!
-                                                                        .streamId
-                                                                        .toString());
-                                                                setState(
-                                                                    () {}); // Refresh UI
-                                                                Get.snackbar(
-                                                                  "Movie Deleted",
-                                                                  "The movie has been deleted from your device",
-                                                                  backgroundColor: Colors
-                                                                      .red
-                                                                      .withOpacity(
-                                                                          0.7),
-                                                                  colorText:
-                                                                      Colors
-                                                                          .white,
-                                                                );
-                                                              },
-                                                            ),
-                                                            TextButton(
-                                                              child: const Text(
-                                                                  "Cancel"),
-                                                              onPressed: () {
-                                                                Navigator.pop(
-                                                                    context);
-                                                              },
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    } else {
-                                                      // Download the movie
-                                                      final link =
-                                                          "${userAuth.serverInfo!.serverUrl}/movie/${userAuth.userInfo!.username}/${userAuth.userInfo!.password}/${movie.movieData!.streamId}.${movie.movieData!.containerExtension}";
-
-                                                      // Show download progress dialog
-                                                      showDialog(
-                                                        context: context,
-                                                        barrierDismissible:
-                                                            false,
-                                                        builder: (context) =>
-                                                            AlertDialog(
-                                                          title: const Text(
-                                                              "Downloading Movie"),
-                                                          content: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            children: const [
-                                                              CircularProgressIndicator(),
-                                                              SizedBox(
-                                                                  height: 16),
-                                                              Text(
-                                                                  "Please wait while we download the movie..."),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      );
-
-                                                      // Start download
-                                                      try {
-                                                        final result =
-                                                            await DownloadService
-                                                                .downloadMovie(
-                                                          movieId: movie
-                                                              .movieData!
-                                                              .streamId
-                                                              .toString(),
-                                                          title: movie
-                                                                  .movieData!
-                                                                  .name ??
-                                                              "",
-                                                          posterUrl: movie.info!
-                                                                  .movieImage ??
-                                                              "",
-                                                          downloadUrl: link,
-                                                        );
-
-                                                        // Close the progress dialog
-                                                        Navigator.pop(context);
-
-                                                        if (result != null) {
-                                                          setState(
-                                                              () {}); // Refresh UI
-                                                          Get.snackbar(
-                                                            "Download Complete",
-                                                            "${result.title} has been downloaded for offline viewing",
-                                                            backgroundColor:
-                                                                Colors.green
-                                                                    .withOpacity(
-                                                                        0.7),
-                                                            colorText:
-                                                                Colors.white,
-                                                          );
-                                                        } else {
-                                                          Get.snackbar(
-                                                            "Download Failed",
-                                                            "Failed to download the movie. Please try again.",
-                                                            backgroundColor:
-                                                                Colors.red
-                                                                    .withOpacity(
-                                                                        0.7),
-                                                            colorText:
-                                                                Colors.white,
-                                                          );
-                                                        }
-                                                      } catch (e) {
-                                                        // Close the progress dialog
-                                                        Navigator.pop(context);
-                                                        Get.snackbar(
-                                                          "Download Error",
-                                                          "An error occurred: $e",
-                                                          backgroundColor:
-                                                              Colors.red
-                                                                  .withOpacity(
-                                                                      0.7),
-                                                          colorText:
-                                                              Colors.white,
-                                                        );
-                                                      }
-                                                    }
-                                                  },
-                                                );
-                                              },
-                                            ),
                                             SizedBox(width: 3.w),
                                             CardButtonWatchMovie(
                                               title: "watch Now",

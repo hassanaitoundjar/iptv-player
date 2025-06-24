@@ -10,20 +10,54 @@ class DialogTrailerYoutube extends StatefulWidget {
 }
 
 class _DialogTrailerYoutubeState extends State<DialogTrailerYoutube> {
-  late final PodPlayerController controller;
+  late PodPlayerController controller;
+  bool _hasError = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    controller = PodPlayerController(
-      playVideoFrom: PlayVideoFrom.youtube(
-        'https://youtu.be/${widget.trailer}',
-      ),
-      podPlayerConfig: const PodPlayerConfig(
-        autoPlay: false,
-        isLooping: false,
-      ),
-    )..initialise();
+    _initializePlayer();
+  }
+  
+  void _initializePlayer() {
+    try {
+      // Print the YouTube trailer ID for debugging
+      print('YouTube Trailer ID: ${widget.trailer}');
+      
+      // Check if the trailer ID is valid
+      if (widget.trailer.isEmpty) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'Invalid YouTube trailer ID';
+        });
+        return;
+      }
+      
+      controller = PodPlayerController(
+        playVideoFrom: PlayVideoFrom.youtube(
+          'https://youtu.be/${widget.trailer}',
+        ),
+        podPlayerConfig: const PodPlayerConfig(
+          autoPlay: true, // Enable autoplay
+          isLooping: false,
+        ),
+      );
+      
+      controller.initialise().catchError((error) {
+        print('YouTube player initialization error: $error');
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'Failed to load YouTube video: $error';
+        });
+      });
+    } catch (e) {
+      print('Exception in _initializePlayer: $e');
+      setState(() {
+        _hasError = true;
+        _errorMessage = 'Error initializing player: $e';
+      });
+    }
   }
 
   @override
@@ -43,7 +77,27 @@ class _DialogTrailerYoutubeState extends State<DialogTrailerYoutube> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: PodVideoPlayer(
+              child: _hasError
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Colors.red,
+                            size: 48,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Error playing YouTube video',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(_errorMessage),
+                        ],
+                      ),
+                    )
+                  : PodVideoPlayer(
                 controller: controller,
                 //onToggleFullScreen: (value) async {},
                 alwaysShowProgressBar: false,
@@ -79,18 +133,19 @@ class _DialogTrailerYoutubeState extends State<DialogTrailerYoutube> {
                   onTap: () => Get.back(),
                 ),
                 const SizedBox(width: 15),
-                CardButtonWatchMovie(
-                  title: controller.isVideoPlaying ? "Pause" : "Play",
-                  onTap: () {
-                    setState(() {
-                      if (controller.isVideoPlaying) {
-                        controller.pause();
-                      } else {
-                        controller.play();
-                      }
-                    });
-                  },
-                ),
+                if (!_hasError)
+                  CardButtonWatchMovie(
+                    title: controller.isVideoPlaying ? "Pause" : "Play",
+                    onTap: () {
+                      setState(() {
+                        if (controller.isVideoPlaying) {
+                          controller.pause();
+                        } else {
+                          controller.play();
+                        }
+                      });
+                    },
+                  ),
               ],
             ),
             const SizedBox(height: 5),
